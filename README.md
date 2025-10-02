@@ -81,6 +81,13 @@ This method allows you to run the application directly on your machine and see t
     If you haven't run the application with Docker, you'll need to initialize the database and apply the migrations:
     ```bash
     export FLASK_APP=wsgi.py
+    flask db init
+    ```
+
+    if you already ran the application you might need to update: 
+    ```bash
+    export FLASK_APP=wsgi.py
+    flask db migrate
     flask db upgrade
     ```
 
