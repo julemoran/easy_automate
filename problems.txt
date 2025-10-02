@@ -1,2 +1,0 @@
-- missing validation of selectors on rest requests! 
-- session timeout on selenium
