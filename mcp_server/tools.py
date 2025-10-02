@@ -155,7 +155,7 @@ def get_screenshot(session_id: str):
     except httpx.RequestError as e:
         return {"error": f"An error occurred while requesting {e.request.url!r}."}
 
-def test_xpath(session_id: str, xpath: str):
+def check_xpath_existence(session_id: str, xpath: str):
     """Tests an XPath expression against the current page via the easy_automate API."""
     try:
         with httpx.Client() as client:

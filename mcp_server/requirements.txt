@@ -1,9 +1,3 @@
-Flask
-Flask-SQLAlchemy
-Flask-Migrate
-selenium
-python-dotenv
-webdriver-manager
 mcp-cli
 httpx
 mcp

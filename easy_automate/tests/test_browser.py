@@ -1,8 +1,14 @@
 import unittest
 import json
-from packages.easy_automate import create_app
-from packages.easy_automate.browser_manager import browser_manager
-from packages.easy_automate.config import Config
+import sys
+import os
+
+# Add the project root to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+from easy_automate.src import create_app
+from easy_automate.src.browser_manager import browser_manager
+from easy_automate.src.config import Config
 
 class TestConfig(Config):
     TESTING = True

@@ -1,6 +1,6 @@
 import asyncio
 from mcp.server import MCPServer
-from packages.mcp_server import tools
+import tools
 
 def main():
     """
@@ -18,7 +18,7 @@ def main():
             tools.navigate_to_url,
             tools.get_dom,
             tools.get_screenshot,
-            tools.test_xpath,
+            tools.check_xpath_existence,
         ]
     )
 
