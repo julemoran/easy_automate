@@ -44,10 +44,9 @@ class BrowserAPITestCase(unittest.TestCase):
         response = self.client.post('/browser/open')
         session_id = json.loads(response.data)['session_id']
 
-        response = self.client.post(f'/browser/{session_id}/screenshot')
+        response = self.client.get(f'/browser/{session_id}/screenshot')
         self.assertEqual(response.status_code, 200)
-        data = json.loads(response.data)
-        self.assertIn('screenshot', data)
+        self.assertEqual(response.content_type, 'image/png')
 
         # Clean up
         self.client.post(f'/browser/{session_id}/close')
@@ -60,8 +59,7 @@ class BrowserAPITestCase(unittest.TestCase):
 
         response = self.client.get(f'/browser/{session_id}/dom')
         self.assertEqual(response.status_code, 200)
-        data = json.loads(response.data)
-        self.assertIn('dom', data)
+        self.assertEqual(response.content_type, 'text/html; charset=utf-8')
 
         # Clean up
         self.client.post(f'/browser/{session_id}/close')
