@@ -1,4 +1,7 @@
-from flask import Blueprint, jsonify, request
+import uuid
+import os
+import base64
+from flask import Blueprint, jsonify, request, Response
 from src.browser_manager import browser_manager
 from src.models import Page
 from selenium.webdriver.common.by import By
@@ -10,7 +13,9 @@ bp = Blueprint('browser', __name__)
 
 @bp.route('/open', methods=['POST'])
 def open_session():
-    session_id = browser_manager.create_session()
+    data = request.get_json() or {}
+    timeout = data.get('timeout')  # Defaults to None if not present
+    session_id = browser_manager.create_session(timeout=timeout)
     return jsonify({'session_id': session_id}), 201
 
 @bp.route('/<string:session_id>/close', methods=['POST'])
@@ -162,3 +167,29 @@ def get_current_page(session_id):
             return jsonify(page.to_dict())
 
     return jsonify({'error': 'No matching page found'}), 404
+
+@bp.route('/<string:session_id>/screenshot', methods=['GET'])
+def take_screenshot(session_id):
+    driver = browser_manager.get_session(session_id)
+    if not driver:
+        return jsonify({'error': 'Session not found'}), 404
+
+    try:
+        screenshot_data = driver.get_screenshot_as_png()
+    except Exception as e:
+        return jsonify({'error': f'Failed to take screenshot: {str(e)}'}), 500
+
+    return Response(screenshot_data, mimetype='image/png')
+
+@bp.route('/<string:session_id>/dom', methods=['GET'])
+def get_dom(session_id):
+    driver = browser_manager.get_session(session_id)
+    if not driver:
+        return jsonify({'error': 'Session not found'}), 404
+
+    try:
+        dom = driver.page_source
+    except Exception as e:
+        return jsonify({'error': f'Failed to get DOM: {str(e)}'}), 500
+
+    return Response(dom, mimetype='text/html')
