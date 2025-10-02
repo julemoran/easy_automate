@@ -36,5 +36,33 @@ class BrowserAPITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 204)
         self.assertNotIn(session_id, browser_manager.sessions)
 
+    @unittest.skip("Skipping browser tests due to environment issues.")
+    def test_take_screenshot(self):
+        # Test taking a screenshot
+        response = self.client.post('/browser/open')
+        session_id = json.loads(response.data)['session_id']
+
+        response = self.client.post(f'/browser/{session_id}/screenshot')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIn('screenshot', data)
+
+        # Clean up
+        self.client.post(f'/browser/{session_id}/close')
+
+    @unittest.skip("Skipping browser tests due to environment issues.")
+    def test_get_dom(self):
+        # Test getting the DOM
+        response = self.client.post('/browser/open')
+        session_id = json.loads(response.data)['session_id']
+
+        response = self.client.get(f'/browser/{session_id}/dom')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertIn('dom', data)
+
+        # Clean up
+        self.client.post(f'/browser/{session_id}/close')
+
 if __name__ == '__main__':
     unittest.main()
