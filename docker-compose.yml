@@ -1,6 +1,6 @@
 version: '3.8'
 services:
-  web:
+  easy_automate:
     build: .
     ports:
       - "5000:5000"
@@ -9,8 +9,18 @@ services:
     environment:
       - FLASK_APP=wsgi.py
       - FLASK_RUN_HOST=0.0.0.0
+      - PYTHONUNBUFFERED=1
     depends_on:
       - selenium
+  mcp_server:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - selenium
+    command: python -m packages.mcp_server.main
   selenium:
     image: selenium/standalone-chrome:latest
     ports:

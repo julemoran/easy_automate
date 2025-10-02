@@ -1,8 +1,8 @@
 import unittest
 import json
-from src import create_app
-from src.browser_manager import browser_manager
-from src.config import Config
+from packages.easy_automate import create_app
+from packages.easy_automate.browser_manager import browser_manager
+from packages.easy_automate.config import Config
 
 class TestConfig(Config):
     TESTING = True

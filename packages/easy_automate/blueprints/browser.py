@@ -2,8 +2,8 @@ import uuid
 import os
 import base64
 from flask import Blueprint, jsonify, request, Response
-from src.browser_manager import browser_manager
-from src.models import Page
+from packages.easy_automate.browser_manager import browser_manager
+from packages.easy_automate.models import Page
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -193,3 +193,34 @@ def get_dom(session_id):
         return jsonify({'error': f'Failed to get DOM: {str(e)}'}), 500
 
     return Response(dom, mimetype='text/html')
+
+@bp.route('/<string:session_id>/navigate_to_url', methods=['POST'])
+def navigate_to_url(session_id):
+    driver = browser_manager.get_session(session_id)
+    if not driver:
+        return jsonify({'error': 'Session not found'}), 404
+
+    data = request.get_json() or {}
+    url = data.get('url')
+    if not url:
+        return jsonify({'error': 'Missing url'}), 400
+
+    driver.get(url)
+    return '', 204
+
+@bp.route('/<string:session_id>/test_xpath', methods=['POST'])
+def test_xpath(session_id):
+    driver = browser_manager.get_session(session_id)
+    if not driver:
+        return jsonify({'error': 'Session not found'}), 404
+
+    data = request.get_json() or {}
+    xpath = data.get('xpath')
+    if not xpath:
+        return jsonify({'error': 'Missing xpath'}), 400
+
+    try:
+        driver.find_element(By.XPATH, xpath)
+        return jsonify({'found': True})
+    except NoSuchElementException:
+        return jsonify({'found': False})

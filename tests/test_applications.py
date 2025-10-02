@@ -1,8 +1,9 @@
 import unittest
 import json
-from src import create_app, db
-from src.models import Application
-from src.config import Config
+from packages.easy_automate import create_app
+from packages.easy_automate import db
+from packages.easy_automate.models import Application
+from packages.easy_automate.config import Config
 
 class TestConfig(Config):
     TESTING = True

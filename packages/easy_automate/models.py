@@ -1,4 +1,4 @@
-from src import db
+from packages.easy_automate import db
 
 class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)

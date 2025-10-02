@@ -1,4 +1,4 @@
-from src import create_app
+from packages.easy_automate import create_app
 
 app = create_app()
 
