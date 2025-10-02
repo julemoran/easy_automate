@@ -1,0 +1,69 @@
+POST http://localhost:5000/applications
+Content-Type: application/json
+
+{
+  "name": "Google"
+}
+
+###
+
+GET http://localhost:5000/applications
+
+###
+
+POST http://localhost:5000/pages
+Content-Type: application/json
+
+{
+  "name": "Google Search",
+  "url": "https://www.google.com",
+  "application_id": 1,
+  "can_be_navigated_to": true,
+  "identifying_selectors": [ { "alias": "input", "xpath": "//textarea[@maxlength=2048]" } ],
+  "interactive_selectors": []
+}
+###
+
+PUT http://localhost:5000/pages/1
+Content-Type: application/json
+
+{
+  "name": "Google Search",
+  "url": "https://www.google.com",
+  "application_id": 1,
+  "can_be_navigated_to": true,
+  "identifying_selectors": [ { "alias": "input", "xpath": "//textarea[@maxlength=2048]" } ],
+  "interactive_selectors": {}
+}
+
+###
+
+POST http://localhost:5000/pages
+Content-Type: application/json
+
+{
+  "name": "Google Search Result",
+  "url": "",
+  "application_id": 1,
+  "can_be_navigated_to": false,
+  "identifying_selectors": { "searchfield": "//div[@id='searchform']" },
+  "interactive_selectors": {}
+}
+
+###
+
+POST http://localhost:5000/browser/open
+
+### 
+
+POST http://localhost:5000/browser/743e73f9-00bf-459a-bb3e-c3a4df5c70f4/navigate
+Content-Type: application/json
+
+{ "page_id" : 1 }
+
+###
+
+POST http://localhost:5000/browser/743e73f9-00bf-459a-bb3e-c3a4df5c70f4/wait-for-page
+Content-Type: application/json
+
+{ "page_id" : 1, "timeout": 10 }
