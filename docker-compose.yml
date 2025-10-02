@@ -1,11 +1,11 @@
 version: '3.8'
 services:
   easy_automate:
-    build: .
+    build: ./easy_automate
     ports:
       - "5000:5000"
     volumes:
-      - .:/app
+      - ./easy_automate:/app
     environment:
       - FLASK_APP=wsgi.py
       - FLASK_RUN_HOST=0.0.0.0
@@ -15,7 +15,7 @@ services:
   mcp_server:
     build: .
     volumes:
-      - .:/app
+      - ./mcp_server:/app
     environment:
       - PYTHONUNBUFFERED=1
     depends_on:

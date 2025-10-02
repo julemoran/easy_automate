@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from packages.easy_automate import db
-from packages.easy_automate.models import Application
+from src import db
+from src.models import Application
 
 bp = Blueprint('applications', __name__)
 

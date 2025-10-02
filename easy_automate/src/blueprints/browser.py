@@ -2,8 +2,8 @@ import uuid
 import os
 import base64
 from flask import Blueprint, jsonify, request, Response
-from packages.easy_automate.browser_manager import browser_manager
-from packages.easy_automate.models import Page
+from src.browser_manager import browser_manager
+from src.models import Page
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
