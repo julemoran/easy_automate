@@ -97,3 +97,4 @@ The application exposes the following API blueprints:
 -   `/applications`: CRUD operations for managing web applications.
 -   `/pages`: CRUD operations for managing pages within an application.
 -   `/browser`: Endpoints for controlling the browser session (e.g., open, close, navigate, click, screenshot).
+    -   `POST /browser/open`: Opens a new browser session. You can optionally provide a `timeout` in seconds in the JSON body. If no timeout is provided, the session will wait indefinitely for commands.

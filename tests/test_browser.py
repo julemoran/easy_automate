@@ -24,7 +24,9 @@ class BrowserAPITestCase(unittest.TestCase):
     @unittest.skip("Skipping browser tests due to environment issues.")
     def test_open_and_close_session(self):
         # Test opening a new session
-        response = self.client.post('/browser/open')
+        response = self.client.post('/browser/open',
+                                    data=json.dumps({'timeout': 30}),
+                                    content_type='application/json')
         self.assertEqual(response.status_code, 201)
         data = json.loads(response.data)
         self.assertIn('session_id', data)
