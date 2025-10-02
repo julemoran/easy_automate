@@ -2,6 +2,7 @@ import uuid
 import os
 import base64
 from flask import Blueprint, jsonify, request
+from flask import Response
 from src.browser_manager import browser_manager
 from src.models import Page
 from selenium.webdriver.common.by import By
@@ -166,7 +167,7 @@ def get_current_page(session_id):
 
     return jsonify({'error': 'No matching page found'}), 404
 
-@bp.route('/<string:session_id>/screenshot', methods=['POST'])
+@bp.route('/<string:session_id>/screenshot', methods=['GET'])
 def take_screenshot(session_id):
     driver = browser_manager.get_session(session_id)
     if not driver:
@@ -175,11 +176,10 @@ def take_screenshot(session_id):
     try:
         # Take screenshot in-memory
         screenshot_data = driver.get_screenshot_as_png()
-        encoded_string = base64.b64encode(screenshot_data).decode('utf-8')
     except Exception as e:
         return jsonify({'error': f'Failed to take screenshot: {str(e)}'}), 500
-
-    return jsonify({'screenshot': encoded_string})
+    
+    return Response(screenshot_data, mimetype='image/png')
 
 @bp.route('/<string:session_id>/dom', methods=['GET'])
 def get_dom(session_id):
