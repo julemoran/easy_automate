@@ -23,6 +23,9 @@ def create_app(config_class=Config):
     from src.blueprints.browser import bp as browser_bp
     app.register_blueprint(browser_bp, url_prefix='/browser')
 
+    from src.blueprints.mcp import bp as mcp_bp
+    app.register_blueprint(mcp_bp, url_prefix='/mcp')
+
     return app
 
 from src import models
