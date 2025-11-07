@@ -57,25 +57,26 @@ class BrowserManagerTestCase(unittest.TestCase):
         }}
         # Test dummy1.html
         self.driver.get('http://localhost:5001/dummy1.html')
-        page = actions.get_current_page(test_pages, applications_pages)
-        self.assertIsNotNone(page)
-        self.assertEqual(page['id'], 'dummy1')
+        pages = actions.get_current_pages(test_pages, applications_pages)
+        self.assertIsInstance(pages, list)
+        self.assertTrue(any(p['id'] == 'dummy1' for p in pages))
         # Test dummy2.html
         self.driver.get('http://localhost:5001/dummy2.html')
-        page = actions.get_current_page(test_pages, applications_pages)
-        self.assertIsNotNone(page)
-        self.assertEqual(page['id'], 'dummy2')
+        pages = actions.get_current_pages(test_pages, applications_pages)
+        self.assertIsInstance(pages, list)
+        self.assertTrue(any(p['id'] == 'dummy2' for p in pages))
         # Test dummy3.html
         self.driver.get('http://localhost:5001/dummy3.html')
-        page = actions.get_current_page(test_pages, applications_pages)
-        self.assertIsNotNone(page)
-        self.assertEqual(page['id'], 'dummy3')
+        pages = actions.get_current_pages(test_pages, applications_pages)
+        self.assertIsInstance(pages, list)
+        self.assertTrue(any(p['id'] == 'dummy3' for p in pages))
         # Test with no matching page (remove visible element)
         self.driver.get('http://localhost:5001/dummy1.html')
         # Remove element via JS
         self.driver.execute_script("document.getElementById('page-identifier-1').style.display='none';")
-        page = actions.get_current_page(test_pages, applications_pages)
-        self.assertIsNone(page)
+        pages = actions.get_current_pages(test_pages, applications_pages)
+        self.assertIsInstance(pages, list)
+        self.assertEqual(len(pages), 0)
     @classmethod
     def setUpClass(cls):
         os.environ['SELENIUM_MODE'] = 'local'
@@ -95,12 +96,10 @@ class BrowserManagerTestCase(unittest.TestCase):
         from src.browser_actions import BrowserActions
         self.driver.get('http://localhost:5001/test.html')
         actions = BrowserActions(self.driver)
-        applications_pages = {'test_app': {'test_page': [
-            {'alias': 'test_element', 'xpath': "//*[@id='test-element']"}]}}
-        result = actions.check_selectors(applications_pages)
-        self.assertIn('test_app', result)
-        self.assertIn('test_element', result['test_app'])
-        self.assertTrue(result['test_app']['test_element']['existing'])
+        selectors = ["//*[@id='test-element']"]
+        result = actions.check_selectors(selectors)
+        self.assertIn(selectors[0], result)
+        self.assertTrue(result[selectors[0]]['existing'])
     def test_create_and_close_session(self):
         # Use the class session for testing close and re-create
         browser_manager.close_session(self.session_id)
@@ -124,21 +123,20 @@ class BrowserManagerTestCase(unittest.TestCase):
         from src.browser_actions import BrowserActions
         self.driver.get('http://localhost:5001/test.html')
         actions = BrowserActions(self.driver)
-        applications_pages = {'test_app': {'test_page': [
-            {'alias': 'test_element', 'xpath': "//*[@id='test-element']"},
-            {'alias': 'invisible_element', 'xpath': "//*[@id='invisible-element']"},
-            {'alias': 'non_existing', 'xpath': "//*[@id='does-not-exist']"}
-        ]}}
-        result = actions.check_selectors(applications_pages)
-        self.assertIn('test_app', result)
-        self.assertIn('test_element', result['test_app'])
-        self.assertTrue(result['test_app']['test_element']['existing'])
-        self.assertTrue(result['test_app']['test_element']['visible'])
-        self.assertIn('invisible_element', result['test_app'])
-        self.assertTrue(result['test_app']['invisible_element']['existing'])
-        self.assertFalse(result['test_app']['invisible_element']['visible'])
-        self.assertIn('non_existing', result['test_app'])
-        self.assertFalse(result['test_app']['non_existing']['existing'])
+        selectors = [
+            "//*[@id='test-element']",
+            "//*[@id='invisible-element']",
+            "//*[@id='does-not-exist']"
+        ]
+        result = actions.check_selectors(selectors)
+        self.assertIn(selectors[0], result)
+        self.assertTrue(result[selectors[0]]['existing'])
+        self.assertTrue(result[selectors[0]]['visible'])
+        self.assertIn(selectors[1], result)
+        self.assertTrue(result[selectors[1]]['existing'])
+        self.assertFalse(result[selectors[1]]['visible'])
+        self.assertIn(selectors[2], result)
+        self.assertFalse(result[selectors[2]]['existing'])
 
 if __name__ == '__main__':
     unittest.main()

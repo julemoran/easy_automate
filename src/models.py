@@ -3,7 +3,7 @@ from src import db
 class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True, nullable=False)
-    pages = db.relationship('Page', backref='application', lazy='dynamic')
+    pages = db.relationship('Page', backref='application', lazy='dynamic', cascade='all, delete-orphan')
 
     def to_dict(self):
         return {

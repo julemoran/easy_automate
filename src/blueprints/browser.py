@@ -117,20 +117,46 @@ def check_selectors(session_id):
     if not driver:
         return jsonify({'error': 'Session not found'}), 404
 
-    # Gather selectors grouped by application and page
-    applications_pages = {}
+    # Gather all unique xpaths and build mapping for output
     pages = Page.query.all()
+    selector_set = set()
+    # Structure: {app_id: {page_id: {alias: {wanted, actual}}}}
+    output = {}
+    selector_map = {}  # xpath -> (app_id, page_id, alias, wanted_visible)
     for page in pages:
         app_id = str(page.application_id)
-        if app_id not in applications_pages:
-            applications_pages[app_id] = {}
-        applications_pages[app_id][str(page.id)] = page.identifying_selectors or []
+        page_id = str(page.id)
+        if app_id not in output:
+            output[app_id] = {}
+        if page_id not in output[app_id]:
+            output[app_id][page_id] = {}
+        for selector in page.identifying_selectors or []:
+            alias = selector.get('alias')
+            xpath = selector.get('xpath')
+            wanted_visible = selector.get('visible', None)
+            if xpath:
+                selector_set.add(xpath)
+                # For mapping back after JS execution
+                selector_map[(app_id, page_id, alias)] = (xpath, wanted_visible)
+                output[app_id][page_id][alias] = {
+                    "wanted": {"visible": wanted_visible},
+                    "actual": None  # to be filled after JS
+                }
 
-    # Generate JS and execute in browser
-    js_code = BrowserActions._generate_selector_check_js(applications_pages)
-    selector_results = driver.execute_script(js_code)
+    selectors = list(selector_set)
+    js_code = BrowserActions._generate_selector_check_js(selectors)
+    try:
+        selector_results = driver.execute_script(js_code)
+    except Exception:
+        print("\n--- JS CODE DUMP ---\n" + js_code + "\n--- END JS CODE DUMP ---\n")
+        raise
 
-    return jsonify(selector_results)
+    # Fill in actual results
+    for (app_id, page_id, alias), (xpath, wanted_visible) in selector_map.items():
+        actual = selector_results.get(xpath, {})
+        output[app_id][page_id][alias]["actual"] = actual
+
+    return jsonify(output)
 
 @bp.route('/<string:session_id>/get-current-page', methods=['GET'])
 def get_current_page(session_id):
@@ -138,19 +164,14 @@ def get_current_page(session_id):
     if not driver:
         return jsonify({'error': 'Session not found'}), 404
 
-    pages = [p for p in Page.query.all()]
-    applications_pages = {}
-    for page in pages:
-        app_id = str(page.application_id)
-        if app_id not in applications_pages:
-            applications_pages[app_id] = {}
-        applications_pages[app_id][str(page.id)] = page.identifying_selectors or []
-
+    from src.browser_actions import BrowserActions
     actions = BrowserActions(driver)
-    matched_page = actions.get_current_page(
-        [p.to_dict() for p in pages], applications_pages)
-    if matched_page:
-        return jsonify(matched_page)
+    # Get all pages as dicts
+    
+    pages = [page.to_dict() for page in Page.query.all()]
+    matched_pages = actions.get_current_pages(pages)
+    if matched_pages:
+        return jsonify(matched_pages)
     return jsonify({'error': 'No matching page found'}), 404
 
 @bp.route('/<string:session_id>/screenshot', methods=['GET'])

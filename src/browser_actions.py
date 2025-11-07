@@ -6,31 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 class BrowserActions:
-    def get_current_page(self, pages, applications_pages):
-        js_code = self._generate_selector_check_js(applications_pages)
-        selector_results = self.driver.execute_script(js_code)
 
-        for page in pages:
-            app_id = str(page.get('application_id'))
-            page_selectors = page.get('identifying_selectors', [])
-            all_match = True
-            for selector in page_selectors:
-                alias = selector.get('alias')
-                required_visible = selector.get('visible', None)
-                result = selector_results.get(app_id, {}).get(alias, {})
-                exists = result.get('existing', False)
-                visible = result.get('visible', False)
-                if required_visible is not None:
-                    if not exists or visible != required_visible:
-                        all_match = False
-                        break
-                else:
-                    if not exists:
-                        all_match = False
-                        break
-            if all_match:
-                return page
-        return None
     def __init__(self, driver):
         self.driver = driver
 
@@ -101,6 +77,48 @@ class BrowserActions:
         except Exception as e:
             return None, f'Failed to get DOM: {str(e)}'
         return dom, None
+    
+    def get_current_pages(self, pages):
+        # Collect all unique xpaths from all identifying selectors of all pages
+        all_xpaths = set()
+        for page in pages:
+            for selector in page.get('identifying_selectors', []):
+                xpath = selector.get('xpath')
+                if xpath:
+                    all_xpaths.add(xpath)
+
+        # Check all selectors at once
+        selector_results = self.check_selectors(list(all_xpaths))
+
+        matched_pages = []
+        for page in pages:
+            all_match = True
+            for selector in page.get('identifying_selectors', []):
+                xpath = selector.get('xpath')
+                if not xpath:
+                    all_match = False
+                    break
+                result = selector_results.get(xpath, {})
+                exists = result.get('existing', False)
+                visible = result.get('visible', False)
+                required_visible = selector.get('visible', None)
+                # Normalize required_visible to boolean if it's a string
+                if isinstance(required_visible, str):
+                    if required_visible.lower() == 'true':
+                        required_visible = True
+                    elif required_visible.lower() == 'false':
+                        required_visible = False
+                # Must exist
+                if not exists:
+                    all_match = False
+                    break
+                # If visible is set, must match
+                if required_visible is not None and visible != required_visible:
+                    all_match = False
+                    break
+            if all_match:
+                matched_pages.append(page)
+        return matched_pages
 
     def _find_selector(self, page, alias):
         selectors = page.identifying_selectors + (page.interactive_selectors or [])
@@ -109,12 +127,12 @@ class BrowserActions:
                 return selector.get('xpath')
         return None
 
-    def check_selectors(self, applications_pages):
-        js_code = self._generate_selector_check_js(applications_pages)
+    def check_selectors(self, selectors):
+        js_code = self._generate_selector_check_js(selectors)
         return self.driver.execute_script(js_code)
 
     @staticmethod
-    def _generate_selector_check_js(applications_pages):
+    def _generate_selector_check_js(selectors):
         js = '''
 function isElementVisible(el) {
     if (!el || !(el instanceof Element)) return false;
@@ -130,23 +148,23 @@ function isElementVisible(el) {
     if (r.width <= 0 || r.height <= 0) return false;
     return true;
 }
-
 var result = {};
 '''
-        for app_id, pages in applications_pages.items():
-            js += f"result['{app_id}'] = {{}};\n"
-            for page_id, selectors in pages.items():
-                for selector in selectors:
-                    alias = selector.get('alias')
-                    xpath = selector.get('xpath')
-                    js += f"try {{\n"
-                    js += f"  var el = document.evaluate(\"{xpath}\", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;\n"
-                    js += f"  var exists = !!el;\n"
-                    js += f"  var vis = exists ? isElementVisible(el) : false;\n"
-                    js += f"  result['{app_id}']['{alias}'] = {{existing: exists, visible: vis}};\n"
-                    js += f"}} catch (e) {{\n"
-                    js += f"  result['{app_id}']['{alias}'] = {{existing: false, visible: false}};\n"
-                    js += f"}}\n"
+        def js_escape(s):
+            # Only escape backslashes and double quotes for JS string
+            return s.replace('\\', r'\\').replace('"', r'\\"')
+
+        for xpath in selectors:
+            escaped_xpath = js_escape(xpath)
+            # Always use double quotes for JS object keys to avoid issues with single quotes in XPath
+            js += "try {\n"
+            js += "  var el = document.evaluate(\"{}\", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;\n".format(escaped_xpath)
+            js += "  var exists = !!el;\n"
+            js += "  var vis = exists ? isElementVisible(el) : false;\n"
+            js += "  result[\"{}\"] = {{existing: exists, visible: vis}};\n".format(escaped_xpath)
+            js += "} catch (e) {\n"
+            js += "  result[\"{}\"] = {{existing: false, visible: false}};\n".format(escaped_xpath)
+            js += "}\n"
         js += "return result;"
         return js
 

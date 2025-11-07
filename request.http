@@ -1,4 +1,10 @@
-@baseURL = http://localhost:5000
+@baseURL = http://localhost:8765
+
+
+
+DELETE {{baseURL}}/applications/1
+
+###
 
 POST {{baseURL}}/applications
 Content-Type: application/json
@@ -9,18 +15,32 @@ Content-Type: application/json
 
 ###
 
-PUT {{baseURL}}/pages/1
+POST {{baseURL}}/pages
 Content-Type: application/json
 
 {
   "name": "Google Search",
-  "url": "https://www.google.com",
+  "url": "https://www.google.com?hl=en&gl=US",
   "application_id": 1,
   "can_be_navigated_to": true,
-  "identifying_selectors": [ { "alias": "input", "xpath": "//textarea[@maxlength=2048]" } ],
-  "interactive_selectors": {}
+  "identifying_selectors": [ { "alias": "input", "xpath": "//textarea[@maxlength=2048]" }, {"alias": "accept", "xpath": "//button//div[contains(text(), 'ccept')]", "visible": "False"} ],
+  "interactive_selectors": [] 
 }
+###
 
+###
+
+POST {{baseURL}}/pages
+Content-Type: application/json
+
+{
+  "name": "Google Search (Confirm Cookie)",
+  "url": "https://www.google.com?hl=en&gl=US",
+  "application_id": 1,
+  "can_be_navigated_to": true,
+  "identifying_selectors": [ { "alias": "input", "xpath": "//textarea[@maxlength=2048]" }, {"alias": "accept", "xpath": "//button//div[contains(text(), 'ccept')]", "visible": "True"} ],
+  "interactive_selectors": [] 
+}
 ###
 
 GET {{baseURL}}/applications
@@ -65,10 +85,10 @@ Content-Type: application/json
 POST {{baseURL}}/browser/{{session_id}}/close
 Content-Type: application/json
 
+@session_id = {{openSession.response.body.session_id}}
 ###
 
 # @name navigateToPage
-# @session_id = {{openSession.response.body.session_id}}
 
 POST {{baseURL}}/browser/{{session_id}}/navigate
 Content-Type: application/json
@@ -79,15 +99,16 @@ Content-Type: application/json
 
 ###
 
-@name clickElement
-@session_id = {{openSession.response.body.session_id}}
+
+# @name clickElement
+# @session_id = {{openSession.response.body.session_id}}
 
 POST {{baseURL}}/browser/{{session_id}}/click
 Content-Type: application/json
 
 {
-  "page_id": "<PAGE_ID>",
-  "selector_alias": "<SELECTOR_ALIAS>"
+  "page_id": "2",
+  "selector_alias": "accept"
 }
 
 ###
@@ -97,9 +118,9 @@ POST {{baseURL}}/browser/{{session_id}}/set-value
 Content-Type: application/json
 
 {
-  "page_id": "<PAGE_ID>",
-  "selector_alias": "<SELECTOR_ALIAS>",
-  "value": "<VALUE>"
+  "page_id": "1",
+  "selector_alias": "input",
+  "value": "selenium\n"
 }
 
 ###
@@ -131,6 +152,11 @@ GET {{baseURL}}/browser/{{session_id}}/get-current-page
 
 ###
 
+# @name checkSelectors
+GET {{baseURL}}/browser/{{session_id}}/checkSelectors
+
+###
+
 # @name takeScreenshot
 GET {{baseURL}}/browser/{{session_id}}/screenshot
 Content-Type: application/json
@@ -146,25 +172,25 @@ POST {{baseURL}}/browser/open
 
 ### 
 
-POST {{baseURL}}/browser/7077cb4e-f8a2-4a0e-a76c-792c6e4b2b7c/navigate
+POST {{baseURL}}/browser/{{session_id}}/navigate
 Content-Type: application/json
 
 { "page_id" : 1 }
 
 ###
 
-POST {{baseURL}}/browser/7077cb4e-f8a2-4a0e-a76c-792c6e4b2b7c/wait-for-page
+POST {{baseURL}}/browser/{{session_id}}/wait-for-page
 Content-Type: application/json
 
 { "page_id" : 1, "timeout": 10 }
 
 ###
 
-GET {{baseURL}}/browser/7077cb4e-f8a2-4a0e-a76c-792c6e4b2b7c/get-current-page
+GET {{baseURL}}/browser/{{session_id}}/get-current-page
 
 ###
 
-POST {{baseURL}}/browser/7077cb4e-f8a2-4a0e-a76c-792c6e4b2b7c/set-value
+POST {{baseURL}}/browser/{{session_id}}/set-value
 Content-Type: application/json
 
 { "page_id" : 1, "selector_alias": "input", "value": "easyautomate" }
