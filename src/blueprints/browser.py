@@ -1,3 +1,4 @@
+from src.browser_actions import BrowserActions
 import uuid
 import os
 import base64
@@ -28,17 +29,14 @@ def navigate_to_page(session_id):
     driver = browser_manager.get_session(session_id)
     if not driver:
         return jsonify({'error': 'Session not found'}), 404
-
+    actions = BrowserActions(driver)
     data = request.get_json() or {}
     page_id = data.get('page_id')
     if not page_id:
         return jsonify({'error': 'Missing page_id'}), 400
-
-    page = Page.query.get_or_404(page_id)
-    if not page.can_be_navigated_to or not page.url:
-        return jsonify({'error': 'Page cannot be navigated to'}), 400
-
-    driver.get(page.url)
+    success, error = actions.navigate_to_page(page_id)
+    if not success:
+        return jsonify({'error': error}), 400
     return '', 204
 
 def _find_selector(page, alias):
@@ -53,24 +51,15 @@ def click_element(session_id):
     driver = browser_manager.get_session(session_id)
     if not driver:
         return jsonify({'error': 'Session not found'}), 404
-
+    actions = BrowserActions(driver)
     data = request.get_json() or {}
     page_id = data.get('page_id')
     alias = data.get('selector_alias')
     if not page_id or not alias:
         return jsonify({'error': 'Missing page_id or selector_alias'}), 400
-
-    page = Page.query.get_or_404(page_id)
-    xpath = _find_selector(page, alias)
-    if not xpath:
-        return jsonify({'error': 'Selector alias not found on page'}), 404
-
-    try:
-        element = driver.find_element(By.XPATH, xpath)
-        element.click()
-    except NoSuchElementException:
-        return jsonify({'error': 'Element not found'}), 404
-
+    success, error = actions.click_element(page_id, alias)
+    if not success:
+        return jsonify({'error': error}), 404
     return '', 204
 
 @bp.route('/<string:session_id>/set-value', methods=['POST'])
@@ -78,26 +67,16 @@ def set_element_value(session_id):
     driver = browser_manager.get_session(session_id)
     if not driver:
         return jsonify({'error': 'Session not found'}), 404
-
+    actions = BrowserActions(driver)
     data = request.get_json() or {}
     page_id = data.get('page_id')
     alias = data.get('selector_alias')
     value = data.get('value')
     if not page_id or not alias or value is None:
         return jsonify({'error': 'Missing page_id, selector_alias, or value'}), 400
-
-    page = Page.query.get_or_404(page_id)
-    xpath = _find_selector(page, alias)
-    if not xpath:
-        return jsonify({'error': 'Selector alias not found on page'}), 404
-
-    try:
-        element = driver.find_element(By.XPATH, xpath)
-        element.clear()
-        element.send_keys(value)
-    except NoSuchElementException:
-        return jsonify({'error': 'Element not found'}), 404
-
+    success, error = actions.set_element_value(page_id, alias, value)
+    if not success:
+        return jsonify({'error': error}), 404
     return '', 204
 
 @bp.route('/<string:session_id>/get-value', methods=['POST'])
@@ -105,24 +84,15 @@ def get_element_value(session_id):
     driver = browser_manager.get_session(session_id)
     if not driver:
         return jsonify({'error': 'Session not found'}), 404
-
+    actions = BrowserActions(driver)
     data = request.get_json() or {}
     page_id = data.get('page_id')
     alias = data.get('selector_alias')
     if not page_id or not alias:
         return jsonify({'error': 'Missing page_id or selector_alias'}), 400
-
-    page = Page.query.get_or_404(page_id)
-    xpath = _find_selector(page, alias)
-    if not xpath:
-        return jsonify({'error': 'Selector alias not found on page'}), 404
-
-    try:
-        element = driver.find_element(By.XPATH, xpath)
-        value = element.get_attribute('value') or element.text
-    except NoSuchElementException:
-        return jsonify({'error': 'Element not found'}), 404
-
+    value, error = actions.get_element_value(page_id, alias)
+    if error:
+        return jsonify({'error': error}), 404
     return jsonify({'value': value})
 
 @bp.route('/<string:session_id>/wait-for-page', methods=['POST'])
@@ -130,23 +100,37 @@ def wait_for_page(session_id):
     driver = browser_manager.get_session(session_id)
     if not driver:
         return jsonify({'error': 'Session not found'}), 404
-
+    actions = BrowserActions(driver)
     data = request.get_json() or {}
     page_id = data.get('page_id')
     timeout = data.get('timeout', 10)
     if not page_id:
         return jsonify({'error': 'Missing page_id'}), 400
-
-    page = Page.query.get_or_404(page_id)
-
-    try:
-        wait = WebDriverWait(driver, timeout)
-        for selector in page.identifying_selectors:
-            wait.until(EC.presence_of_element_located((By.XPATH, selector['xpath'])))
-    except TimeoutException:
-        return jsonify({'error': 'Timeout waiting for page to load'}), 408
-
+    success, error = actions.wait_for_page(page_id, timeout)
+    if not success:
+        return jsonify({'error': error}), 408
     return '', 204
+
+@bp.route('/<string:session_id>/checkSelectors', methods=['GET'])
+def check_selectors(session_id):
+    driver = browser_manager.get_session(session_id)
+    if not driver:
+        return jsonify({'error': 'Session not found'}), 404
+
+    # Gather selectors grouped by application and page
+    applications_pages = {}
+    pages = Page.query.all()
+    for page in pages:
+        app_id = str(page.application_id)
+        if app_id not in applications_pages:
+            applications_pages[app_id] = {}
+        applications_pages[app_id][str(page.id)] = page.identifying_selectors or []
+
+    # Generate JS and execute in browser
+    js_code = BrowserActions._generate_selector_check_js(applications_pages)
+    selector_results = driver.execute_script(js_code)
+
+    return jsonify(selector_results)
 
 @bp.route('/<string:session_id>/get-current-page', methods=['GET'])
 def get_current_page(session_id):
@@ -154,18 +138,19 @@ def get_current_page(session_id):
     if not driver:
         return jsonify({'error': 'Session not found'}), 404
 
-    pages = Page.query.all()
+    pages = [p for p in Page.query.all()]
+    applications_pages = {}
     for page in pages:
-        is_current_page = True
-        for selector in page.identifying_selectors:
-            try:
-                driver.find_element(By.XPATH, selector['xpath'])
-            except NoSuchElementException:
-                is_current_page = False
-                break
-        if is_current_page:
-            return jsonify(page.to_dict())
+        app_id = str(page.application_id)
+        if app_id not in applications_pages:
+            applications_pages[app_id] = {}
+        applications_pages[app_id][str(page.id)] = page.identifying_selectors or []
 
+    actions = BrowserActions(driver)
+    matched_page = actions.get_current_page(
+        [p.to_dict() for p in pages], applications_pages)
+    if matched_page:
+        return jsonify(matched_page)
     return jsonify({'error': 'No matching page found'}), 404
 
 @bp.route('/<string:session_id>/screenshot', methods=['GET'])
@@ -173,12 +158,10 @@ def take_screenshot(session_id):
     driver = browser_manager.get_session(session_id)
     if not driver:
         return jsonify({'error': 'Session not found'}), 404
-
-    try:
-        screenshot_data = driver.get_screenshot_as_png()
-    except Exception as e:
-        return jsonify({'error': f'Failed to take screenshot: {str(e)}'}), 500
-
+    actions = BrowserActions(driver)
+    screenshot_data, error = actions.take_screenshot()
+    if error:
+        return jsonify({'error': error}), 500
     return Response(screenshot_data, mimetype='image/png')
 
 @bp.route('/<string:session_id>/dom', methods=['GET'])
@@ -186,10 +169,8 @@ def get_dom(session_id):
     driver = browser_manager.get_session(session_id)
     if not driver:
         return jsonify({'error': 'Session not found'}), 404
-
-    try:
-        dom = driver.page_source
-    except Exception as e:
-        return jsonify({'error': f'Failed to get DOM: {str(e)}'}), 500
-
+    actions = BrowserActions(driver)
+    dom, error = actions.get_dom()
+    if error:
+        return jsonify({'error': error}), 500
     return Response(dom, mimetype='text/html')

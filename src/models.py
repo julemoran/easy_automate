@@ -17,8 +17,8 @@ class Page(db.Model):
     application_id = db.Column(db.Integer, db.ForeignKey('application.id'), nullable=False)
     url = db.Column(db.String(256))
     can_be_navigated_to = db.Column(db.Boolean, default=False)
-    identifying_selectors = db.Column(db.JSON, nullable=False)  # List of {'alias': '...', 'xpath': '...'}
-    interactive_selectors = db.Column(db.JSON)   # List of {'alias': '...', 'xpath': '...'}
+    identifying_selectors = db.Column(db.JSON, nullable=False)  # List of {'alias': '...', 'xpath': '...', 'visible': true/false (optional)}
+    interactive_selectors = db.Column(db.JSON)   # List of {'alias': '...', 'xpath': '...', 'visible': true/false (optional)}
 
     def to_dict(self):
         return {

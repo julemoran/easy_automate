@@ -24,6 +24,11 @@ class BrowserManager:
             options.add_argument('--no-sandbox')
             options.add_argument('--disable-dev-shm-usage')
             options.add_argument('--disable-gpu')
+            options.add_argument("--lang=en")
+            options.add_argument("--accept-lang=en")
+            options.add_experimental_option("prefs", {
+                "intl.accept_languages": "en,en_US"
+            })
 
             driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
         else:
@@ -32,6 +37,11 @@ class BrowserManager:
             options.add_argument('--no-sandbox')
             options.add_argument('--disable-dev-shm-usage')
             options.add_argument('--disable-gpu')
+            options.add_argument("--lang=en")
+            options.add_argument("--accept-lang=en")
+            options.add_experimental_option("prefs", {
+                "intl.accept_languages": "en,en_US"
+            })
 
             selenium_hub_url = os.environ.get('SELENIUM_HUB_URL', 'http://selenium:4444/wd/hub')
             driver = webdriver.Remote(
