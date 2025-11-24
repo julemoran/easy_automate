@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from src.config import Config
+from flask_cors import CORS
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -14,6 +15,8 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
 
+    CORS(app)
+
     # Register blueprints here
     from src.blueprints.applications import bp as applications_bp
     app.register_blueprint(applications_bp, url_prefix='/applications')
@@ -23,6 +26,10 @@ def create_app(config_class=Config):
 
     from src.blueprints.browser import bp as browser_bp
     app.register_blueprint(browser_bp, url_prefix='/browser')
+
+    # Register socketio blueprint (for organization)
+    from src.blueprints.socketio import websocket_bp
+    app.register_blueprint(websocket_bp)
 
     return app
 

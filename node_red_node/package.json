@@ -1,0 +1,25 @@
+{
+  "name": "node-red-contrib-browser-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "node-red" : {
+    "nodes": {
+      "browser-create-session": "nodes/browser-create-session.js",
+      "browser-close-session": "nodes/browser-close-session.js",
+      "browser-navigate": "nodes/browser-navigate.js",
+      "browser-get-dom": "nodes/browser-get-dom.js",
+      "browser-get-screenshot": "nodes/browser-get-screenshot.js",
+      "browser-interact": "nodes/browser-interact.js",
+      "browser-get-current-page": "nodes/browser-get-current-page.js"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+<script type="text/javascript">
+RED.nodes.registerType('browser-get-dom',{
+    category: 'browser',
+    color: '#a6bbcf',
+    defaults: {
+        name: {value:""}
+    },
+    inputs:1,
+    outputs:1,
+    icon: "font-awesome/fa-globe",
+    label: function() {
+        return this.name||"browser-get-dom";
+    }
+});
+</script>
+
+<script type="text/html" data-template-name="browser-get-dom">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+<script type="text/html" data-help-name="browser-get-dom">
+    <p>Node-RED node for retrieving the DOM from a browser session via the easy_automate API.</p>
+</script>

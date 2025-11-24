@@ -1,0 +1,26 @@
+<html>
+<script type="text/javascript">
+    RED.nodes.registerType('browser-get-current-page', {
+        category: 'browser',
+        color: '#a6bbcf',
+        defaults: {
+            name: { value: '' },
+            session_id: { value: '', required: true },
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: 'font-awesome/fa-search',
+        label: function () {
+            return this.name || 'Get Current Page';
+        }
+    });
+</script>
+<div class="form-row">
+    <label for="node-input-session_id"><i class="icon-tag"></i> Session ID</label>
+    <input type="text" id="node-input-session_id" placeholder="Session ID">
+</div>
+<div class="form-row">
+    <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name">
+</div>
+</html>

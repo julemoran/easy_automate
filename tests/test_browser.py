@@ -80,7 +80,7 @@ class BrowserManagerTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         os.environ['SELENIUM_MODE'] = 'local'
-        os.environ['INTERACTIVE_MODE'] = 'True'
+        os.environ['INTERACTIVE_MODE'] = 'true'
         global server_thread
         if server_thread is None:
             server_thread = threading.Thread(target=run_test_server, daemon=True)

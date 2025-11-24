@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRUD Forms for Applications & Pages</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div id="crud-app" class="container-fluid mt-4">
+  <div class="row" style="height: 80vh;">
+    <!-- Sidebar: Applications & Pages -->
+    <div class="col-md-4" style="overflow-y: auto; max-height: 100%; border-right: 1px solid #dee2e6;">
+      <h4>Applications</h4>
+      <ul class="list-group mb-3">
+        <li v-for="app in applications" :key="app.id" class="list-group-item list-group-item-action"
+            :class="{active: selectedApp && selectedApp.id === app.id}"
+            @click="selectApp(app)">
+          {{ app.name }}
+          <button class="btn btn-danger btn-sm float-right" @click.stop="deleteApplication(app.id)">Delete</button>
+        </li>
+      </ul>
+      <form @submit.prevent="createApplication" class="form-inline mb-3">
+        <input v-model="newApp.name" class="form-control mr-2" placeholder="New Application Name" required>
+        <button type="submit" class="btn btn-primary">Add</button>
+      </form>
+      <div v-if="selectedApp">
+        <h5>Edit Application</h5>
+        <form @submit.prevent="updateApplication(selectedApp)" class="form-inline mb-3">
+          <input v-model="selectedApp.name" class="form-control mr-2" required>
+          <button type="submit" class="btn btn-success">Update</button>
+        </form>
+        <h5>Pages</h5>
+        <ul class="list-group mb-3">
+          <li v-for="page in pagesForSelectedApp" :key="page.id" class="list-group-item list-group-item-action"
+              :class="{active: selectedPage && selectedPage.id === page.id}"
+              @click="selectPage(page)">
+            {{ page.name }}
+            <button class="btn btn-danger btn-sm float-right" @click.stop="deletePage(page.id)">Delete</button>
+          </li>
+        </ul>
+        <button class="btn btn-secondary btn-sm mb-2" @click="showNewPageForm = !showNewPageForm">
+          {{ showNewPageForm ? 'Cancel' : 'Add Page' }}
+        </button>
+        <div v-if="showNewPageForm">
+          <form @submit.prevent="createPage" class="mb-2">
+            <input v-model="newPage.name" class="form-control mb-1" placeholder="Page Name" required>
+            <input v-model="newPage.url" class="form-control mb-1" placeholder="URL">
+            <div class="form-check mb-1">
+              <input type="checkbox" v-model="newPage.can_be_navigated_to" class="form-check-input" id="newPageNav">
+              <label class="form-check-label" for="newPageNav">Can be navigated to</label>
+            </div>
+            <h6>Identifying Selectors</h6>
+            <div v-for="(sel, idx) in newPage.identifying_selectors" :key="'ident-'+idx" class="form-row mb-1">
+              <input v-model="sel.alias" class="form-control col mr-1" placeholder="Alias" required>
+              <input v-model="sel.xpath" class="form-control col mr-1" placeholder="XPath" required>
+              <tri-state-checkbox v-model="sel.visible"></tri-state-checkbox>
+              <button type="button" class="btn btn-danger btn-sm" @click="newPage.identifying_selectors.splice(idx,1)">Remove</button>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm mb-2" @click="newPage.identifying_selectors.push({alias:'',xpath:'',visible:null})">Add Selector</button>
+            <h6>Interactive Selectors</h6>
+            <div v-for="(sel, idx) in newPage.interactive_selectors" :key="'inter-'+idx" class="form-row mb-1">
+              <input v-model="sel.alias" class="form-control col mr-1" placeholder="Alias">
+              <input v-model="sel.xpath" class="form-control col mr-1" placeholder="XPath">
+              <tri-state-checkbox v-model="sel.visible"></tri-state-checkbox>
+              <button type="button" class="btn btn-danger btn-sm" @click="newPage.interactive_selectors.splice(idx,1)">Remove</button>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm mb-2" @click="newPage.interactive_selectors.push({alias:'',xpath:'',visible:null})">Add Selector</button>
+            <button type="submit" class="btn btn-primary mt-2">Add Page</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <!-- Main: Edit Page -->
+    <div class="col-md-8">
+      <div v-if="selectedPage">
+        <h4>Edit Page</h4>
+        <form @submit.prevent="updatePage(selectedPage)">
+          <input v-model="selectedPage.name" class="form-control mb-1" required>
+          <input v-model="selectedPage.url" class="form-control mb-1" placeholder="URL">
+          <div class="form-check mb-1">
+            <input type="checkbox" v-model="selectedPage.can_be_navigated_to" class="form-check-input" id="editPageNav">
+            <label class="form-check-label" for="editPageNav">Can be navigated to</label>
+          </div>
+          <h6>Identifying Selectors</h6>
+          <div v-for="(sel, idx) in selectedPage.identifying_selectors" :key="'ident-row-'+idx" class="form-row mb-1">
+            <input v-model="sel.alias" class="form-control col mr-1" placeholder="Alias" required>
+            <input v-model="sel.xpath" class="form-control col mr-1" placeholder="XPath" required>
+            <tri-state-checkbox v-model="sel.visible"></tri-state-checkbox>
+            <button type="button" class="btn btn-danger btn-sm" @click="selectedPage.identifying_selectors.splice(idx,1)">Remove</button>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm mb-2" @click="selectedPage.identifying_selectors.push({alias:'',xpath:'',visible:null})">Add Selector</button>
+          <h6>Interactive Selectors</h6>
+          <div v-for="(sel, idx) in selectedPage.interactive_selectors" :key="'inter-row-'+idx" class="form-row mb-1">
+            <input v-model="sel.alias" class="form-control col mr-1" placeholder="Alias">
+            <input v-model="sel.xpath" class="form-control col mr-1" placeholder="XPath">
+            <tri-state-checkbox v-model="sel.visible"></tri-state-checkbox>
+            <button type="button" class="btn btn-danger btn-sm" @click="selectedPage.interactive_selectors.splice(idx,1)">Remove</button>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm mb-2" @click="selectedPage.interactive_selectors.push({alias:'',xpath:'',visible:null})">Add Selector</button>
+          <button type="submit" class="btn btn-success mt-2">Update Page</button>
+        </form>
+      </div>
+      <div v-else>
+        <p>Select a page to edit.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+Vue.component('tri-state-checkbox', {
+  props: ['value'],
+  template: `
+    <span style="display: inline-block; min-width: 70px;">
+      <button type="button" class="btn btn-outline-secondary btn-sm" @click="cycleState" :class="btnClass">
+        <span v-if="value === null">Any visibility</span>
+        <span v-else-if="value === true">must be visible</span>
+        <span v-else-if="value === false">must not be visible</span>
+      </button>
+    </span>
+  `,
+  computed: {
+    btnClass() {
+      if (this.value === null) return 'btn-warning';
+      if (this.value === true) return 'btn-success';
+      return 'btn-danger';
+    }
+  },
+  methods: {
+    cycleState() {
+      let next;
+      if (this.value === null) next = true;
+      else if (this.value === true) next = false;
+      else next = null;
+      this.$emit('input', next);
+    }
+  }
+});
+
+new Vue({
+  el: '#crud-app',
+  data: {
+    applications: [],
+    pages: [],
+    newApp: { name: '' },
+    selectedApp: null,
+    selectedPage: null,
+    showNewPageForm: false,
+    newPage: {
+      application_id: '',
+      name: '',
+      url: '',
+      can_be_navigated_to: false,
+      identifying_selectors: [],
+      interactive_selectors: []
+    }
+  },
+  mounted() {
+    this.fetchApplications();
+    this.fetchPages();
+  },
+  methods: {
+    fetchApplications() {
+      fetch('/applications').then(r => r.json()).then(data => {
+        this.applications = data;
+        if (this.selectedApp) {
+          const found = data.find(a => a.id === this.selectedApp.id);
+          this.selectedApp = found ? found : null;
+        }
+      });
+    },
+    createApplication() {
+      fetch('/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: this.newApp.name })
+      }).then(r => r.json()).then(() => {
+        this.newApp = { name: '' };
+        this.fetchApplications();
+      });
+    },
+    updateApplication(app) {
+      fetch(`/applications/${app.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: app.name })
+      }).then(() => this.fetchApplications());
+    },
+    deleteApplication(id) {
+      fetch(`/applications/${id}`, { method: 'DELETE' })
+        .then(() => {
+          if (this.selectedApp && this.selectedApp.id === id) {
+            this.selectedApp = null;
+            this.selectedPage = null;
+          }
+          this.fetchApplications();
+          this.fetchPages();
+        });
+    },
+    fetchPages() {
+      fetch('/pages').then(r => r.json()).then(data => {
+        // Ensure all selectors have 'visible' field and normalize casing
+        const normalizeVisible = v => {
+          if (v === undefined) return null;
+          if (v === true || v === false) return v;
+          if (v === 'True') return true;
+          if (v === 'False') return false;
+          return null;
+        };
+        this.pages = data.map(page => {
+          const fixSelectors = arr => (arr || []).map(sel => {
+            if (!('visible' in sel)) sel.visible = null;
+            sel.visible = normalizeVisible(sel.visible);
+            return sel;
+          });
+          return {
+            ...page,
+            identifying_selectors: fixSelectors(page.identifying_selectors),
+            interactive_selectors: fixSelectors(page.interactive_selectors)
+          };
+        });
+        if (this.selectedPage) {
+          const found = this.pages.find(p => p.id === this.selectedPage.id);
+          this.selectedPage = found ? found : null;
+        }
+      });
+    },
+    createPage() {
+      const cleanSelectors = arr => (arr || []).filter(s => s.alias && s.xpath).map(sel => {
+        const out = { ...sel };
+        // Accept Python casing
+        if (out.visible === 'True') out.visible = true;
+        if (out.visible === 'False') out.visible = false;
+        // Remove 'visible' if null
+        if (out.visible === null || out.visible === undefined) delete out.visible;
+        return out;
+      });
+      const payload = {
+        application_id: this.selectedApp.id,
+        name: this.newPage.name,
+        url: this.newPage.url,
+        can_be_navigated_to: this.newPage.can_be_navigated_to,
+        identifying_selectors: cleanSelectors(this.newPage.identifying_selectors),
+        interactive_selectors: cleanSelectors(this.newPage.interactive_selectors)
+      };
+      fetch('/pages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(r => r.json()).then(() => {
+        this.newPage = {
+          application_id: '',
+          name: '',
+          url: '',
+          can_be_navigated_to: false,
+          identifying_selectors: [],
+          interactive_selectors: []
+        };
+        this.showNewPageForm = false;
+        this.fetchPages();
+      });
+    },
+    updatePage(page) {
+      const cleanSelectors = arr => (arr || []).filter(s => s.alias && s.xpath).map(sel => {
+        const out = { ...sel };
+        // Accept Python casing
+        if (out.visible === 'True') out.visible = true;
+        if (out.visible === 'False') out.visible = false;
+        // Remove 'visible' if null
+        if (out.visible === null || out.visible === undefined) delete out.visible;
+        return out;
+      });
+      const payload = {
+        application_id: this.selectedApp.id,
+        name: page.name,
+        url: page.url,
+        can_be_navigated_to: page.can_be_navigated_to,
+        identifying_selectors: cleanSelectors(page.identifying_selectors),
+        interactive_selectors: cleanSelectors(page.interactive_selectors)
+      };
+      fetch(`/pages/${page.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(() => this.fetchPages());
+    },
+    selectApp(app) {
+      this.selectedApp = Object.assign({}, app);
+      this.selectedPage = null;
+      this.showNewPageForm = false;
+      this.newPage = {
+        application_id: app.id,
+        name: '',
+        url: '',
+        can_be_navigated_to: false,
+        identifying_selectors: [],
+        interactive_selectors: []
+      };
+    },
+    selectPage(page) {
+      this.selectedPage = JSON.parse(JSON.stringify(page));
+    },
+    deletePage(id) {
+      fetch(`/pages/${id}`, { method: 'DELETE' })
+        .then(() => this.fetchPages());
+    }
+  },
+  computed: {
+    pagesForSelectedApp() {
+      if (!this.selectedApp) return [];
+      return this.pages.filter(p => p.application_id === this.selectedApp.id);
+    }
+  }
+});
+</script>
+</body>
+</html>

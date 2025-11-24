@@ -1,0 +1,25 @@
+<script type="text/javascript">
+RED.nodes.registerType('browser-close-session',{
+    category: 'browser',
+    color: '#a6bbcf',
+    defaults: {
+        name: {value:""}
+    },
+    inputs:1,
+    outputs:1,
+    icon: "font-awesome/fa-globe",
+    label: function() {
+        return this.name||"browser-close-session";
+    }
+});
+</script>
+
+<script type="text/html" data-template-name="browser-close-session">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+<script type="text/html" data-help-name="browser-close-session">
+    <p>Node-RED node for closing a browser session via the easy_automate API.</p>
+</script>

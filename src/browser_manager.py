@@ -26,6 +26,9 @@ class BrowserManager:
             options.add_argument('--disable-gpu')
             options.add_argument("--lang=en")
             options.add_argument("--accept-lang=en")
+            # Suppress ChromeDriver and GCM logs
+            options.add_argument('--log-level=3')
+            options.add_experimental_option('excludeSwitches', ['enable-logging'])
             options.add_experimental_option("prefs", {
                 "intl.accept_languages": "en,en_US"
             })
@@ -39,6 +42,9 @@ class BrowserManager:
             options.add_argument('--disable-gpu')
             options.add_argument("--lang=en")
             options.add_argument("--accept-lang=en")
+            # Suppress ChromeDriver and GCM logs
+            options.add_argument('--log-level=3')
+            options.add_experimental_option('excludeSwitches', ['enable-logging'])
             options.add_experimental_option("prefs", {
                 "intl.accept_languages": "en,en_US"
             })

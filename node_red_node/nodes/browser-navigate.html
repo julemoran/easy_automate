@@ -1,0 +1,64 @@
+<script type="text/javascript">
+RED.nodes.registerType('browser-navigate',{
+    category: 'browser',
+    color: '#a6bbcf',
+    defaults: {
+        name: {value:""},
+        page_id: {value:""}
+    },
+    inputs:1,
+    outputs:1,
+    icon: "font-awesome/fa-globe",
+    label: function() {
+        return this.name||"browser-navigate";
+    },
+    oneditprepare: function() {
+        var pageSelect = $("#node-input-page_id");
+        var notify = RED.notify || function(msg, type) { alert(msg); };
+        notify('Loading pages from /pages ...', 'info');
+        fetch('http://localhost:5000/pages')
+            .then(response => {
+                if (!response.ok) {
+                    notify('Network error: ' + response.status, 'error');
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                pageSelect.empty();
+                let pages = Array.isArray(data) ? data : (data.pages || []);
+                for (const page of pages) {
+                    pageSelect.append(`<option value="${page.id}">${page.name}</option>`);
+                }
+                // Set the select to the current value if present
+                if (typeof pageSelect.val === 'function') {
+                    pageSelect.val($("#node-input-page_id").data('value'));
+                }
+                notify('Pages loaded successfully.', 'success');
+            })
+            .catch((err) => {
+                pageSelect.empty();
+                pageSelect.append('<option value="">Error loading pages</option>');
+                notify('Error loading pages: ' + err, 'error');
+            });
+        // Store the value for later
+        pageSelect.data('value', this.page_id);
+    }
+});
+</script>
+
+<script type="text/html" data-template-name="browser-navigate">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-page_id"><i class="fa fa-file"></i> Page</label>
+        <select id="node-input-page_id" name="page_id" style="width: 70%">
+            <option value="">Loading...</option>
+        </select>
+    </div>
+</script>
+<script type="text/html" data-help-name="browser-navigate">
+    <p>Node-RED node for navigating to a page in a browser session via the easy_automate API.</p>
+</script>

@@ -1,0 +1,25 @@
+<script type="text/javascript">
+RED.nodes.registerType('browser-create-session',{
+    category: 'browser',
+    color: '#a6bbcf',
+    defaults: {
+        name: {value:""}
+    },
+    inputs:1,
+    outputs:1,
+    icon: "font-awesome/fa-globe",
+    label: function() {
+        return this.name||"browser-create-session";
+    }
+});
+</script>
+
+<script type="text/html" data-template-name="browser-create-session">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+<script type="text/html" data-help-name="browser-create-session">
+    <p>Node-RED node for creating a browser session via the easy_automate API.</p>
+</script>

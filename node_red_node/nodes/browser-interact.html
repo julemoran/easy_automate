@@ -1,0 +1,175 @@
+<script type="text/javascript">
+  RED.nodes.registerType("browser-interact", {
+    category: "browser",
+    color: "#a6bbcf",
+    defaults: {
+      name: { value: "" },
+      selector_alias: { value: "" },
+      interaction: { value: "click" },
+      value: { value: "" },
+      page_id: { value: "" },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: "font-awesome/fa-globe",
+    label: function () {
+      return this.name || "browser-interact";
+    },
+    oneditprepare: function () {
+      var pageSelect = $("#node-input-page_id");
+      var selectorSelect = $("#node-input-selector_alias");
+      // Ensure IDs are correct
+      if (!pageSelect.length) {
+        console.error(
+          "Page select element with id #node-input-page_id not found"
+        );
+      }
+      if (!selectorSelect.length) {
+        console.error(
+          "Selector select element with id #node-input-selector_alias not found"
+        );
+      }
+      var pagesCache = null;
+
+      function markUnavailable($el, unavailable) {
+        if (unavailable) {
+          $el.css("border", "2px solid red");
+        } else {
+          $el.css("border", "");
+        }
+      }
+
+      function loadSelectors(pageId, selectedSelector, pagesCache) {
+        selectorSelect.empty();
+        if (!pageId) {
+          selectorSelect.append('<option value="">Select page first</option>');
+          markUnavailable(selectorSelect, false);
+          return;
+        }
+        let getPageAndPopulate = function (pageObj) {
+          let selectors = [];
+          if (pageObj) {
+            if (Array.isArray(pageObj.identifying_selectors))
+              selectors = selectors.concat(pageObj.identifying_selectors);
+            if (Array.isArray(pageObj.interactive_selectors))
+              selectors = selectors.concat(pageObj.interactive_selectors);
+          }
+          selectorSelect.empty();
+          for (const sel of selectors) {
+            selectorSelect.append(
+              `<option value="${sel.alias}">${sel.alias}</option>`
+            );
+          }
+          // Always restore the selected value from node config or previous selection
+          let toSelect =
+            selectedSelector || selectorSelect.data("selected") || "";
+          if (toSelect && selectors.some((sel) => sel.alias === toSelect)) {
+            selectorSelect.val(toSelect);
+            markUnavailable(selectorSelect, false);
+          } else {
+            selectorSelect.val("");
+            if (toSelect) markUnavailable(selectorSelect, true);
+          }
+        };
+        if (pagesCache && Array.isArray(pagesCache)) {
+          let pageObj = pagesCache.find((p) => String(p.id) === String(pageId));
+          getPageAndPopulate(pageObj);
+        } else {
+          selectorSelect.empty();
+          selectorSelect.append('<option value="">No pages loaded</option>');
+          markUnavailable(selectorSelect, true);
+        }
+      }
+
+      // Store selected for later
+      pageSelect.data("selected", this.page_id);
+      selectorSelect.data("selected", this.selector_alias);
+
+      // On initial load, pass selector_alias from node config to loadSelectors
+      function initialLoadPages(selectedPageId, selectedSelectorAlias) {
+        pageSelect.empty();
+        pageSelect.append('<option value="">Loading...</option>');
+        fetch("http://localhost:5000/pages")
+          .then((response) => response.json())
+          .then((data) => {
+            pageSelect.empty();
+            pagesCache = Array.isArray(data) ? data : data.pages || [];
+            let domValue = selectedPageId != null ? String(selectedPageId) : "";
+            let found = false;
+            for (const page of pagesCache) {
+              let pageIdStr = String(page.id);
+              pageSelect.append(
+                `<option value="${pageIdStr}">${page.name}</option>`
+              );
+              if (pageIdStr === domValue) found = true;
+            }
+            if (found) {
+              pageSelect.val(domValue);
+              markUnavailable(pageSelect, false);
+            } else {
+              pageSelect.val("");
+              if (domValue) markUnavailable(pageSelect, true);
+            }
+            // Always pass the selector alias from node config on initial load
+            loadSelectors(pageSelect.val(), selectedSelectorAlias, pagesCache);
+          })
+          .catch(() => {
+            pageSelect.empty();
+            pageSelect.append('<option value="">Error loading pages</option>');
+            markUnavailable(pageSelect, true);
+          });
+      }
+      initialLoadPages(this.page_id, this.selector_alias);
+      // Only load pages once, then reuse cache for selectors
+      pageSelect.on("change", function () {
+        // Store the selected value for restoration
+        selectorSelect.data("selected", selectorSelect.val());
+        loadSelectors(pageSelect.val(), "", pagesCache);
+      });
+    },
+  });
+</script>
+
+<script type="text/html" data-template-name="browser-interact">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name" name="name" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-selector_alias"
+      ><i class="fa fa-crosshairs"></i> Selector Alias</label
+    >
+    <select
+      id="node-input-selector_alias"
+      name="selector_alias"
+      style="width: 70%"
+    >
+      <option value="">Select page first</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-interaction"
+      ><i class="fa fa-mouse-pointer"></i> Interaction</label
+    >
+    <select id="node-input-interaction" name="interaction">
+      <option value="click">Click</option>
+      <option value="set-value">Set Value</option>
+      <option value="get-value">Get Value</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-value"><i class="fa fa-pencil"></i> Value</label>
+    <input
+      type="text"
+      id="node-input-value"
+      name="value"
+      placeholder="Value (for set-value)"
+    />
+  </div>
+  <div class="form-row">
+    <label for="node-input-page_id"><i class="fa fa-file"></i> Page</label>
+    <select id="node-input-page_id" name="page_id" style="width: 70%">
+      <option value="">Loading...</option>
+    </select>
+  </div>
+</script>
