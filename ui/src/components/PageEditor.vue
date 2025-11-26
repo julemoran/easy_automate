@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, watch, toRaw, inject, type Ref } from 'vue';
+import { ref, watch, toRaw, inject, provide, type Ref } from 'vue';
 import type { Page, Selector } from '../model';
 import { api } from '../api';
-import TristateCheckbox from './TriStateCheckbox.vue';
+import SelectorList from './SelectorList.vue';
+
 
 const browserSession: Ref<{session_id: string} | null>  = inject('browserSession', ref(null));
 
@@ -10,9 +11,7 @@ const props = defineProps<{
   page: Page
 }>();
 
-const emit = defineEmits<{
-  (e: 'save', page: Page): void
-}>();
+const emit = defineEmits<(e: 'save', page: Page) => void>();
 
 // Create a local copy to edit
 const localPage = ref<Page>({ ...props.page });
@@ -27,6 +26,14 @@ const addSelector = (type: 'identifying' | 'interactive') => {
   const newSel: Selector = { alias: '', xpath: '', visible: null };
   if (type === 'identifying') localPage.value.identifying_selectors.push(newSel);
   else localPage.value.interactive_selectors.push(newSel);
+};
+
+const updateSelector = (type: 'identifying' | 'interactive', selector: Selector, index: number) => {
+  if (type === 'identifying') {
+    localPage.value.identifying_selectors.splice(index, 1, selector);
+  } else {
+    localPage.value.interactive_selectors.splice(index, 1, selector);
+  }
 };
 
 const removeSelector = (type: 'identifying' | 'interactive', index: number) => {
@@ -45,11 +52,65 @@ const navigateToPage = async () => {
   }
   try {
     await api.navigateToPage(browserSession.value.session_id, localPage.value.id!);
-    alert('Navigation command sent!');
   } catch (e) {
+    console.error(e);
     alert('Failed to navigate to page');
   }
 };
+
+// Show DOM modal logic
+const showDomModal = ref(false);
+const domContent = ref('');
+const domLoading = ref(false);
+const domError = ref('');
+
+const showCleanedDomModal = ref(false);
+const cleanedDomContent = ref('');
+const cleanedDomLoading = ref(false);
+const cleanedDomError = ref('');
+
+const fetchDom = async () => {
+  domError.value = '';
+  domContent.value = '';
+  if (!browserSession || !browserSession.value?.session_id) {
+    domError.value = 'No browser session open';
+    showDomModal.value = true;
+    return;
+  }
+  domLoading.value = true;
+  showDomModal.value = true;
+  try {
+    const dom = await api.getDom(browserSession.value.session_id);
+    domContent.value = dom;
+  } catch (e) {
+    domError.value = 'Failed to fetch DOM';
+  } finally {
+    domLoading.value = false;
+  }
+};
+
+const fetchCleanedDom = async () => {
+  cleanedDomError.value = '';
+  cleanedDomContent.value = '';
+  if (!browserSession || !browserSession.value?.session_id) {
+    cleanedDomError.value = 'No browser session open';
+    showCleanedDomModal.value = true;
+    return;
+  }
+  cleanedDomLoading.value = true;
+  showCleanedDomModal.value = true;
+  try {
+    const dom = await api.getCleanedDom(browserSession.value.session_id);
+    cleanedDomContent.value = dom;
+  } catch (e) {
+    cleanedDomError.value = 'Failed to fetch cleaned DOM';
+  } finally {
+    cleanedDomLoading.value = false;
+  }
+};
+
+provide('browserSession', browserSession.value);
+provide('pageId', localPage.value.id ?? null);
 </script>
 
 <template>
@@ -64,42 +125,106 @@ const navigateToPage = async () => {
       >
         Navigate to Page
       </button>
+      <button
+        class="btn btn-outline-info btn-sm ms-2"
+        type="button"
+        @click="fetchDom"
+        title="Show DOM"
+      >
+        Show DOM
+      </button>
+      <button
+        class="btn btn-outline-warning btn-sm ms-2"
+        type="button"
+        @click="fetchCleanedDom"
+        title="Show Cleaned DOM"
+      >
+        Show Cleaned DOM
+      </button>
     </div>
     <form @submit.prevent="save">
       <div class="form-group">
-        <label>Name</label>
-        <input v-model="localPage.name" class="form-control" required>
+        <label for="editPageName">Name</label>
+        <input id="editPageName" v-model="localPage.name" class="form-control" required>
       </div>
       <div class="form-group">
-        <label>URL</label>
-        <input v-model="localPage.url" class="form-control">
+        <label for="editPageUrl">URL</label>
+        <input id="editPageUrl" v-model="localPage.url" class="form-control">
       </div>
       <div class="form-check mb-3">
         <input type="checkbox" v-model="localPage.can_be_navigated_to" class="form-check-input" id="editPageNav">
         <label class="form-check-label" for="editPageNav">Can be navigated to</label>
       </div>
 
-      <h6>Identifying Selectors</h6>
-      <div v-for="(sel, idx) in localPage.identifying_selectors" :key="'ident-row-'+idx" class="form-row mb-2 row">
-        <div class="col"><input v-model="sel.alias" class="form-control" placeholder="Alias" required></div>
-        <div class="col"><input v-model="sel.xpath" class="form-control" placeholder="XPath" required></div>
-        <div class="col-auto"><TristateCheckbox v-model="sel.visible" /></div>
-        <div class="col-auto"><button type="button" class="btn btn-danger btn-sm" @click="removeSelector('identifying', idx)">X</button></div>
-      </div>
-      <button type="button" class="btn btn-secondary btn-sm mb-3" @click="addSelector('identifying')">Add Selector</button>
+      <SelectorList
+        :selectors="localPage.identifying_selectors"
+        type="identifying"
+        title="Identifying Selectors"
+        @add="() => addSelector('identifying')"
+        @update="(selector, idx) => updateSelector('identifying', selector, idx)"
+        @remove="idx => removeSelector('identifying', idx)"
+      />
 
-      <h6>Interactive Selectors</h6>
-      <div v-for="(sel, idx) in localPage.interactive_selectors" :key="'inter-row-'+idx" class="form-row mb-2 row">
-        <div class="col"><input v-model="sel.alias" class="form-control" placeholder="Alias"></div>
-        <div class="col"><input v-model="sel.xpath" class="form-control" placeholder="XPath"></div>
-        <div class="col-auto"><TristateCheckbox v-model="sel.visible" /></div>
-        <div class="col-auto"><button type="button" class="btn btn-danger btn-sm" @click="removeSelector('interactive', idx)">X</button></div>
-      </div>
-      <button type="button" class="btn btn-secondary btn-sm mb-3" @click="addSelector('interactive')">Add Selector</button>
+      <SelectorList
+        :selectors="localPage.interactive_selectors"
+        type="interactive"
+        title="Interactive Selectors"
+        @add="() => addSelector('interactive')"
+        @update="(selector, idx) => updateSelector('interactive', selector, idx)"
+        @remove="idx => removeSelector('interactive', idx)"
+      />
 
       <div>
         <button type="submit" class="btn btn-success">Save Changes</button>
       </div>
     </form>
+
+    <!-- DOM Modal -->
+    <dialog class="modal fade" :class="{ show: showDomModal }" :style="showDomModal ? 'display: block; background: rgba(0,0,0,0.5);' : 'display: none;'" tabindex="-1">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Page DOM</h5>
+            <button type="button" class="btn-close" @click="showDomModal = false"></button>
+          </div>
+          <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+            <div v-if="domLoading" class="text-center py-3">
+              <span class="spinner-border"></span> Loading DOM...
+            </div>
+            <div v-else-if="domError" class="alert alert-danger">{{ domError }}</div>
+            <pre v-else style="white-space: pre-wrap; word-break: break-all; background: #f8f9fa; padding: 1em; border-radius: 4px;">
+              {{ domContent }}
+            </pre>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="showDomModal = false">Close</button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Cleaned DOM Modal -->
+    <dialog class="modal fade" :class="{ show: showCleanedDomModal }" :style="showCleanedDomModal ? 'display: block; background: rgba(0,0,0,0.5);' : 'display: none;'" tabindex="-1">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Cleaned Page DOM</h5>
+            <button type="button" class="btn-close" @click="showCleanedDomModal = false"></button>
+          </div>
+          <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+            <div v-if="cleanedDomLoading" class="text-center py-3">
+              <span class="spinner-border"></span> Loading Cleaned DOM...
+            </div>
+            <div v-else-if="cleanedDomError" class="alert alert-danger">{{ cleanedDomError }}</div>
+            <pre v-else style="white-space: pre-wrap; word-break: break-all; background: #f8f9fa; padding: 1em; border-radius: 4px;">
+              {{ cleanedDomContent }}
+            </pre>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="showCleanedDomModal = false">Close</button>
+          </div>
+        </div>
+      </div>
+    </dialog>
   </div>
 </template>

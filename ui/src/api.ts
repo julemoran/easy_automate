@@ -110,4 +110,7 @@ export const api = {
 
   getDom: (sessionId: string) =>
     fetch(`/api/browser/${sessionId}/dom`).then(r => r.text()),
+
+  getCleanedDom: (sessionId: string) =>
+    fetch(`/api/browser/${sessionId}/cleaned-dom`).then(r => r.text()),
 };

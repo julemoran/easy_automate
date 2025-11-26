@@ -5,3 +5,4 @@ selenium
 python-dotenv
 webdriver-manager
 flask-sock
+beautifulsoup4

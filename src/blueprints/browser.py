@@ -186,6 +186,42 @@ def take_screenshot(session_id):
         return jsonify({'error': error}), 500
     return Response(screenshot_data, mimetype='image/png')
 
+
+# New endpoint: cleaned DOM (removes <script> and <img> tags)
+@bp.route('/<string:session_id>/cleaned-dom', methods=['GET'])
+def get_cleaned_dom(session_id):
+    driver = browser_manager.get_session(session_id)
+    if not driver:
+        return jsonify({'error': 'Session not found'}), 404
+    actions = BrowserActions(driver)
+    dom, error = actions.get_dom()
+    if error:
+        return jsonify({'error': error}), 500
+    # Clean DOM: remove <script> and <img> tags
+    try:
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(dom, 'html.parser')
+        # Remove all <script> tags
+        for script in soup.find_all('script'):
+            script.decompose()
+        # Remove all <img> tags
+        for img in soup.find_all('img'):
+            img.decompose()
+        # Remove all <style> tags
+        for style in soup.find_all('style'):
+            style.decompose()
+        # Remove all <link> tags
+        for link in soup.find_all('link'):
+            link.decompose()
+        # Remove content of all <svg> tags (keep empty svg)
+        for svg in soup.find_all('svg'):
+            svg.clear()
+        # Format output (pretty-print)
+        cleaned_dom = soup.prettify()
+    except Exception as e:
+        return jsonify({'error': f'Failed to clean DOM: {e}'}), 500
+    return Response(cleaned_dom, mimetype='text/html')
+
 @bp.route('/<string:session_id>/dom', methods=['GET'])
 def get_dom(session_id):
     driver = browser_manager.get_session(session_id)
