@@ -147,6 +147,7 @@ def check_selectors(session_id):
     js_code = BrowserActions._generate_selector_check_js(selectors)
     try:
         selector_results = driver.execute_script(js_code)
+        print(selector_results)
     except Exception:
         print("\n--- JS CODE DUMP ---\n" + js_code + "\n--- END JS CODE DUMP ---\n")
         raise

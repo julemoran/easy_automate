@@ -101,9 +101,9 @@ This method allows you to run the application directly on your machine and see t
 
 The application exposes the following API blueprints:
 
--   `/applications`: CRUD operations for managing web applications.
--   `/pages`: CRUD operations for managing pages within an application.
--   `/browser`: Endpoints for controlling the browser session (e.g., open, close, navigate, click, screenshot).
-    -   `POST /browser/open`: Opens a new browser session. You can optionally provide a `timeout` in seconds in the JSON body. If no timeout is provided, the session will wait indefinitely for commands.
-    -   `GET /browser/<session_id>/screenshot`: Returns a PNG image of the current browser view.
-    -   `GET /browser/<session_id>/dom`: Returns the full HTML of the current page.
+-   `/api/applications`: CRUD operations for managing web applications.
+-   `/api/pages`: CRUD operations for managing pages within an application.
+-   `/api/browser`: Endpoints for controlling the browser session (e.g., open, close, navigate, click, screenshot).
+    -   `POST /api/browser/open`: Opens a new browser session. You can optionally provide a `timeout` in seconds in the JSON body. If no timeout is provided, the session will wait indefinitely for commands.
+    -   `GET /api/browser/<session_id>/screenshot`: Returns a PNG image of the current browser view.
+    -   `GET /api/browser/<session_id>/dom`: Returns the full HTML of the current page.

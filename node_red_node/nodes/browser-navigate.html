@@ -15,8 +15,8 @@ RED.nodes.registerType('browser-navigate',{
     oneditprepare: function() {
         var pageSelect = $("#node-input-page_id");
         var notify = RED.notify || function(msg, type) { alert(msg); };
-        notify('Loading pages from /pages ...', 'info');
-        fetch('http://localhost:5000/pages')
+        notify('Loading pages from /api/pages ...', 'info');
+        fetch('http://localhost:5000/api/pages')
             .then(response => {
                 if (!response.ok) {
                     notify('Network error: ' + response.status, 'error');

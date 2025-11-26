@@ -23,7 +23,7 @@ class ApplicationAPITestCase(unittest.TestCase):
 
     def test_create_application(self):
         # Test creating a new application
-        response = self.client.post('/applications',
+        response = self.client.post('/api/applications',
                                     data=json.dumps({'name': 'Test App'}),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 201)
@@ -36,7 +36,7 @@ class ApplicationAPITestCase(unittest.TestCase):
         db.session.add(app)
         db.session.commit()
 
-        response = self.client.get('/applications')
+        response = self.client.get('/api/applications')
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(len(data), 1)
@@ -48,7 +48,7 @@ class ApplicationAPITestCase(unittest.TestCase):
         db.session.add(app)
         db.session.commit()
 
-        response = self.client.get(f'/applications/{app.id}')
+        response = self.client.get(f'/api/applications/{app.id}')
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data['name'], 'Test App')
@@ -59,7 +59,7 @@ class ApplicationAPITestCase(unittest.TestCase):
         db.session.add(app)
         db.session.commit()
 
-        response = self.client.put(f'/applications/{app.id}',
+        response = self.client.put(f'/api/applications/{app.id}',
                                    data=json.dumps({'name': 'Updated App'}),
                                    content_type='application/json')
         self.assertEqual(response.status_code, 200)
@@ -72,7 +72,7 @@ class ApplicationAPITestCase(unittest.TestCase):
         db.session.add(app)
         db.session.commit()
 
-        response = self.client.delete(f'/applications/{app.id}')
+        response = self.client.delete(f'/api/applications/{app.id}')
         self.assertEqual(response.status_code, 204)
         self.assertIsNone(Application.query.get(app.id))
 

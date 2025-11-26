@@ -2,11 +2,11 @@
 
 
 
-DELETE {{baseURL}}/applications/1
+DELETE {{baseURL}}/api/applications/1
 
 ###
 
-POST {{baseURL}}/applications
+POST {{baseURL}}/api/applications
 Content-Type: application/json
 
 {
@@ -15,7 +15,7 @@ Content-Type: application/json
 
 ###
 
-POST {{baseURL}}/pages
+POST {{baseURL}}/api/pages
 Content-Type: application/json
 
 {
@@ -30,7 +30,7 @@ Content-Type: application/json
 
 ###
 
-POST {{baseURL}}/pages
+POST {{baseURL}}/api/pages
 Content-Type: application/json
 
 {
@@ -43,15 +43,15 @@ Content-Type: application/json
 }
 ###
 
-GET {{baseURL}}/applications
+GET {{baseURL}}/api/applications
 
 
 ### 
-GET {{baseURL}}/pages
+GET {{baseURL}}/api/pages
 
 ###
 
-POST {{baseURL}}/pages
+POST {{baseURL}}/api/pages
 Content-Type: application/json
 
 {
@@ -72,7 +72,7 @@ Content-Type: application/json
 ###
 
 # @name openSession
-POST {{baseURL}}/browser/open
+POST {{baseURL}}/api/browser/open
 Content-Type: application/json
 
 {}
@@ -82,7 +82,7 @@ Content-Type: application/json
 # @session_id = {{openSession.response.body.session_id}}
 
 # @name closeSession
-POST {{baseURL}}/browser/{{session_id}}/close
+POST {{baseURL}}/api/browser/{{session_id}}/close
 Content-Type: application/json
 
 @session_id = {{openSession.response.body.session_id}}
@@ -90,7 +90,7 @@ Content-Type: application/json
 
 # @name navigateToPage
 
-POST {{baseURL}}/browser/{{session_id}}/navigate
+POST {{baseURL}}/api/browser/{{session_id}}/navigate
 Content-Type: application/json
 
 {
@@ -103,7 +103,7 @@ Content-Type: application/json
 # @name clickElement
 # @session_id = {{openSession.response.body.session_id}}
 
-POST {{baseURL}}/browser/{{session_id}}/click
+POST {{baseURL}}/api/browser/{{session_id}}/click
 Content-Type: application/json
 
 {
@@ -114,7 +114,7 @@ Content-Type: application/json
 ###
 
 # @name setElementValue
-POST {{baseURL}}/browser/{{session_id}}/set-value
+POST {{baseURL}}/api/browser/{{session_id}}/set-value
 Content-Type: application/json
 
 {
@@ -126,7 +126,7 @@ Content-Type: application/json
 ###
 
 # @name getElementValue
-POST {{baseURL}}/browser/{{session_id}}/get-value
+POST {{baseURL}}/api/browser/{{session_id}}/get-value
 
 Content-Type: application/json
 {
@@ -137,7 +137,7 @@ Content-Type: application/json
 ###
 
 # @name waitForPage
-POST {{baseURL}}/browser/{{session_id}}/wait-for-page
+POST {{baseURL}}/api/browser/{{session_id}}/wait-for-page
 
 Content-Type: application/json
 {
@@ -148,49 +148,49 @@ Content-Type: application/json
 ###
 
 # @name getCurrentPage
-GET {{baseURL}}/browser/{{session_id}}/get-current-page
+GET {{baseURL}}/api/browser/{{session_id}}/get-current-page
 
 ###
 
 # @name checkSelectors
-GET {{baseURL}}/browser/{{session_id}}/checkSelectors
+GET {{baseURL}}/api/browser/{{session_id}}/checkSelectors
 
 ###
 
 # @name takeScreenshot
-GET {{baseURL}}/browser/{{session_id}}/screenshot
+GET {{baseURL}}/api/browser/{{session_id}}/screenshot
 Content-Type: application/json
 
 ###
 
 # @name getDom
-GET {{baseURL}}/browser/{{session_id}}/dom
+GET {{baseURL}}/api/browser/{{session_id}}/dom
 
 ###
 
-POST {{baseURL}}/browser/open
+POST {{baseURL}}/api/browser/open
 
 ### 
 
-POST {{baseURL}}/browser/{{session_id}}/navigate
+POST {{baseURL}}/api/browser/{{session_id}}/navigate
 Content-Type: application/json
 
 { "page_id" : 1 }
 
 ###
 
-POST {{baseURL}}/browser/{{session_id}}/wait-for-page
+POST {{baseURL}}/api/browser/{{session_id}}/wait-for-page
 Content-Type: application/json
 
 { "page_id" : 1, "timeout": 10 }
 
 ###
 
-GET {{baseURL}}/browser/{{session_id}}/get-current-page
+GET {{baseURL}}/api/browser/{{session_id}}/get-current-page
 
 ###
 
-POST {{baseURL}}/browser/{{session_id}}/set-value
+POST {{baseURL}}/api/browser/{{session_id}}/set-value
 Content-Type: application/json
 
 { "page_id" : 1, "selector_alias": "input", "value": "easyautomate" }

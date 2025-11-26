@@ -89,7 +89,7 @@
       function initialLoadPages(selectedPageId, selectedSelectorAlias) {
         pageSelect.empty();
         pageSelect.append('<option value="">Loading...</option>');
-        fetch("http://localhost:5000/pages")
+        fetch("http://localhost:5000/api/pages")
           .then((response) => response.json())
           .then((data) => {
             pageSelect.empty();

@@ -11,7 +11,7 @@
   - `browser.py`: Browser session control (open, close, navigate, screenshot, DOM)
 - node_red_node: Custom Node-RED nodes for interacting with the API
 - `src/models.py`: SQLAlchemy models for applications and pages
-- `src/browser_manager.py` & `src/browser_actions.py`: Selenium browser orchestration and actions
+- `src/api/browser_manager.py` & `src/api/browser_actions.py`: Selenium browser orchestration and actions
 - `migrations/`: Alembic migration scripts for database schema
 - `wsgi.py`: Flask app entry point
 
@@ -38,16 +38,16 @@
   - Models are defined in `src/models.py`.
   - Alembic handles migrations; do not edit migration scripts manually.
 - **API Usage:**
-  - Main endpoints: `/applications`, `/pages`, `/browser` (see README for details)
+  - Main endpoints: `/api/applications`, `/api/pages`, `/api/browser` (see README for details)
 
 ## Integration Points
-- **Selenium:** Controlled via `src/browser_manager.py` and `src/browser_actions.py`.
+- **Selenium:** Controlled via `src/api/browser_manager.py` and `src/api/browser_actions.py`.
 - **Docker Compose:** Orchestrates Flask app and Selenium Hub for remote browser sessions.
 - **Environment Variables:** `.env` file configures Flask and Selenium modes.
 
 ## Examples
-- To open a browser session via API: `POST /browser/open` (optionally with `{ "timeout": 30 }`)
-- To get a screenshot: `GET /browser/<session_id>/screenshot`
+- To open a browser session via API: `POST /api/browser/open` (optionally with `{ "timeout": 30 }`)
+- To get a screenshot: `GET /api/browser/<session_id>/screenshot`
 
 ---
 

@@ -19,13 +19,13 @@ def create_app(config_class=Config):
 
     # Register blueprints here
     from src.blueprints.applications import bp as applications_bp
-    app.register_blueprint(applications_bp, url_prefix='/applications')
+    app.register_blueprint(applications_bp, url_prefix='/api/applications')
 
     from src.blueprints.pages import bp as pages_bp
-    app.register_blueprint(pages_bp, url_prefix='/pages')
+    app.register_blueprint(pages_bp, url_prefix='/api/pages')
 
     from src.blueprints.browser import bp as browser_bp
-    app.register_blueprint(browser_bp, url_prefix='/browser')
+    app.register_blueprint(browser_bp, url_prefix='/api/browser')
 
     # Register socketio blueprint (for organization)
     from src.blueprints.socketio import websocket_bp

@@ -35,7 +35,7 @@ class PageAPITestCase(unittest.TestCase):
             'can_be_navigated_to': True,
             'url': 'http://example.com'
         }
-        response = self.client.post('/pages',
+        response = self.client.post('/api/pages',
                                     data=json.dumps(page_data),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 201)
@@ -53,7 +53,7 @@ class PageAPITestCase(unittest.TestCase):
         db.session.add(page)
         db.session.commit()
 
-        response = self.client.get('/pages')
+        response = self.client.get('/api/pages')
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(len(data), 1)
@@ -69,7 +69,7 @@ class PageAPITestCase(unittest.TestCase):
         db.session.add(page)
         db.session.commit()
 
-        response = self.client.get(f'/pages/{page.id}')
+        response = self.client.get(f'/api/pages/{page.id}')
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data['name'], 'Home Page')
@@ -85,7 +85,7 @@ class PageAPITestCase(unittest.TestCase):
         db.session.commit()
 
         update_data = {'name': 'Updated Home Page'}
-        response = self.client.put(f'/pages/{page.id}',
+        response = self.client.put(f'/api/pages/{page.id}',
                                    data=json.dumps(update_data),
                                    content_type='application/json')
         self.assertEqual(response.status_code, 200)
@@ -102,7 +102,7 @@ class PageAPITestCase(unittest.TestCase):
         db.session.add(page)
         db.session.commit()
 
-        response = self.client.delete(f'/pages/{page.id}')
+        response = self.client.delete(f'/api/pages/{page.id}')
         self.assertEqual(response.status_code, 204)
         self.assertIsNone(Page.query.get(page.id))
 

@@ -1,0 +1,1 @@
+$env:PATH="D:\123\programs\nvm\v24.11.1;$env:PATH"

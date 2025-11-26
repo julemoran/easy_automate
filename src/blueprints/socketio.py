@@ -7,13 +7,21 @@ import time
 websocket_bp = Blueprint('socketio', __name__)
 sock = Sock()
 
-@websocket_bp.route('/ws-test')
-def ws_test():
-    return send_from_directory(websocket_bp.root_path + '/../static', 'ws_test.html')
 
-@websocket_bp.route('/crud')
-def crud():
-    return send_from_directory(websocket_bp.root_path + '/../static', 'crud.html')
+
+# Serve any file from the static folder using the root endpoint
+@websocket_bp.route('/', defaults={'filename': None})
+@websocket_bp.route('/<path:filename>')
+def static_files(filename):
+	static_dir = websocket_bp.root_path + '/../static'
+	if filename:
+		return send_from_directory(static_dir, filename)
+	else:
+		# Optionally serve an index.html or a simple message
+		try:
+			return send_from_directory(static_dir, 'index.html')
+		except Exception:
+			return 'Static file server: specify a filename in the URL.', 404
 
 
 # Standard WebSocket endpoint using Flask-Sock
