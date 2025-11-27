@@ -79,9 +79,12 @@ class BrowserActions:
         return dom, None
     
     def get_current_pages(self, pages):
-        # Collect all unique xpaths from all identifying selectors of all pages
+        # Exclude pages with no identifying selectors
+        filtered_pages = [page for page in pages if page.get('identifying_selectors')]
+
+        # Collect all unique xpaths from all identifying selectors of all filtered pages
         all_xpaths = set()
-        for page in pages:
+        for page in filtered_pages:
             for selector in page.get('identifying_selectors', []):
                 xpath = selector.get('xpath')
                 if xpath:
@@ -91,7 +94,7 @@ class BrowserActions:
         selector_results = self.check_selectors(list(all_xpaths))
 
         matched_pages = []
-        for page in pages:
+        for page in filtered_pages:
             all_match = True
             for selector in page.get('identifying_selectors', []):
                 xpath = selector.get('xpath')
@@ -135,7 +138,9 @@ class BrowserActions:
     def _generate_selector_check_js(selectors):
         js = '''
 function isElementVisible(el) {
-    if (!el || !(el instanceof Element)) return false;
+    if (!el) return false; 
+    if (el.nodeType == Node.TEXT_NODE) return isElementVisible(el.parentElement);
+    if (!(el instanceof Element)) return false;
     if (!document.documentElement.contains(el)) return false;
     if (el.getClientRects().length === 0) return false;
     for (let cur = el; cur; cur = cur.parentElement) {
@@ -158,12 +163,14 @@ var result = {};
             escaped_xpath = js_escape(xpath)
             # Always use double quotes for JS object keys to avoid issues with single quotes in XPath
             js += "try {\n"
-            js += "  var el = document.evaluate(\"{}\", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;\n".format(escaped_xpath)
+            js += '  var xpath = "{}";\n'.format(escaped_xpath)
+            js += "  var el = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;\n"
             js += "  var exists = !!el;\n"
             js += "  var vis = exists ? isElementVisible(el) : false;\n"
-            js += "  result[\"{}\"] = {{existing: exists, visible: vis}};\n".format(escaped_xpath)
+            js += "  result[\"{}\"] = {{existing: exists, visible: vis, xpath }};\n".format(escaped_xpath)
             js += "} catch (e) {\n"
-            js += "  result[\"{}\"] = {{existing: false, visible: false}};\n".format(escaped_xpath)
+            js += '  console.error("Error evaluating XPath {}:", e);\n'.format(escaped_xpath)
+            js += "  result[\"{}\"] = {{existing: false, visible: false, error: String(e)}};\n".format(escaped_xpath)
             js += "}\n"
         js += "return result;"
         return js

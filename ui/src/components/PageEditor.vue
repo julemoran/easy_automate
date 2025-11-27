@@ -86,6 +86,31 @@ const cleanedDomContent = ref('');
 const cleanedDomLoading = ref(false);
 const cleanedDomError = ref('');
 
+// Check Selectors modal logic
+const showCheckSelectorsModal = ref(false);
+const checkSelectorsContent = ref('');
+const checkSelectorsLoading = ref(false);
+const checkSelectorsError = ref('');
+
+const fetchCheckSelectors = async () => {
+  checkSelectorsError.value = '';
+  checkSelectorsContent.value = '';
+  if (!browserSession || !browserSession.value?.session_id) {
+    checkSelectorsError.value = 'No browser session open';
+    showCheckSelectorsModal.value = true;
+    return;
+  }
+  checkSelectorsLoading.value = true;
+  showCheckSelectorsModal.value = true;
+  try {
+    const result = await api.checkSelectors(browserSession.value.session_id);
+    checkSelectorsContent.value = JSON.stringify(result, null, 2);
+  } catch (e) {
+    checkSelectorsError.value = 'Failed to fetch check-selectors output';
+  } finally {
+    checkSelectorsLoading.value = false;
+  }
+};
 const fetchDom = async () => {
   domError.value = '';
   domContent.value = '';
@@ -157,6 +182,14 @@ provide('pageId', localPage.value.id ?? null);
       >
         Show Cleaned DOM
       </button>
+        <button
+          class="btn btn-outline-secondary btn-sm ms-2"
+          type="button"
+          @click="fetchCheckSelectors"
+          title="Show Check Selectors Output"
+        >
+          Check Selectors
+        </button>
     </div>
     <form @submit.prevent="save">
       <div class="form-group">
@@ -247,4 +280,27 @@ provide('pageId', localPage.value.id ?? null);
       </div>
     </dialog>
   </div>
+      <!-- Check Selectors Modal -->
+      <dialog class="modal fade" :class="{ show: showCheckSelectorsModal }" :style="showCheckSelectorsModal ? 'display: block; background: rgba(0,0,0,0.5);' : 'display: none;'" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Check Selectors Output</h5>
+              <button type="button" class="btn-close" @click="showCheckSelectorsModal = false"></button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+              <div v-if="checkSelectorsLoading" class="text-center py-3">
+                <span class="spinner-border"></span> Loading Check Selectors Output...
+              </div>
+              <div v-else-if="checkSelectorsError" class="alert alert-danger">{{ checkSelectorsError }}</div>
+              <pre v-else style="white-space: pre-wrap; word-break: break-all; background: #f8f9fa; padding: 1em; border-radius: 4px;">
+                {{ checkSelectorsContent }}
+              </pre>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="showCheckSelectorsModal = false">Close</button>
+            </div>
+          </div>
+        </div>
+      </dialog>
 </template>
