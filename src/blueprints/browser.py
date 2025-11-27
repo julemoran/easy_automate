@@ -173,7 +173,8 @@ def get_current_page(session_id):
     matched_pages = actions.get_current_pages(pages)
     if matched_pages:
         return jsonify(matched_pages)
-    return jsonify({'error': 'No matching page found'}), 404
+    
+    return jsonify([]), 200
 
 @bp.route('/<string:session_id>/screenshot', methods=['GET'])
 def take_screenshot(session_id):
