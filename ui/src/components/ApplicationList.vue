@@ -49,7 +49,7 @@ const handleEditSave = () => {
   <div>
     <div class="d-flex align-items-center justify-content-between mb-2">
       <h4 class="mb-0">Applications</h4>
-      <button class="btn btn-primary btn-sm" title="Add" @click="openCreateModal">
+      <button class="btn btn-outline-primary btn-sm" title="Add" @click="openCreateModal">
         <i class="bi bi-plus"></i>
       </button>
     </div>
@@ -59,11 +59,11 @@ const handleEditSave = () => {
           :class="{ active: selectedAppId === app.id }"
           @click="emit('select', app)">
         <span>{{ app.name }}</span>
-        <span class="btn-group btn-group-sm">
-          <button class="btn btn-outline-secondary" title="Edit" @click.stop="openEditModal(app)">
+        <span class="btn-group btn-group-sm column-gap-1">
+          <button class="btn btn-secondary" title="Edit" @click.stop="openEditModal(app)">
             <i class="bi bi-pencil"></i>
           </button>
-          <button class="btn btn-outline-danger" title="Delete" @click.stop="emit('delete', app.id!)">
+          <button class="btn btn-danger" title="Delete" @click.stop="emit('delete', app.id!)">
             <i class="bi bi-trash"></i>
           </button>
         </span>

@@ -24,7 +24,7 @@ const modalPageName = ref('');
 const editingPage = ref<Page | null>(null);
 
 // Track current page id from browser session
-const browserSession: Ref<{session_id: string} | null>  = inject('browserSession', ref(null));
+const browserSession: Ref<{ session_id: string } | null> = inject('browserSession', ref(null));
 const currentPageId = ref<string | null>(null);
 let pollTimer: number | null = null;
 
@@ -93,31 +93,48 @@ const handlePageModalSave = () => {
   }
   showPageModal.value = false;
 };
+
+const navigateToPage = async (page: Page) => {
+  if (!browserSession || !browserSession.value?.session_id) {
+    alert('No browser session open');
+    return;
+  }
+  try {
+    await api.navigateToPage(browserSession.value.session_id, page.id!);
+  } catch (e) {
+    console.error(e);
+    alert('Failed to navigate to page');
+  }
+};
 </script>
 
 <template>
   <div>
     <div class="d-flex align-items-center justify-content-between mb-2">
       <h5 class="mb-0">Pages</h5>
-      <button class="btn btn-primary btn-sm" title="Add Page" @click="openCreatePageModal">
+      <button class="btn btn-outline-primary btn-sm" title="Add Page" @click="openCreatePageModal">
         <i class="bi bi-plus"></i>
       </button>
     </div>
 
     <ul class="list-group mb-3">
       <li v-for="page in pages" :key="page.id"
-          class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-          :class="{ active: selectedPageId === page.id }"
-          @click="emit('select-page', page)">
-        <span>
+        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+        :class="{ active: selectedPageId === page.id }" @click="emit('select-page', page)">
+        <span class="d-flex align-items-center">
           {{ page.name }}
           <span v-if="currentPageId === page.id" class="badge bg-info ms-2">Current</span>
+
         </span>
-        <span class="btn-group btn-group-sm">
-          <button class="btn btn-outline-secondary" title="Edit" @click.stop="openEditPageModal(page)">
+        <span class="btn-group btn-group-sm column-gap-1">
+          <button v-if="page.can_be_navigated_to" class="btn btn-secondary btn-sm ms-2" title="Navigate to Page"
+            @click.stop="navigateToPage(page)">
+            <i class="bi bi-globe"></i>
+          </button>
+          <button class="btn btn-secondary" title="Edit" @click.stop="openEditPageModal(page)">
             <i class="bi bi-pencil"></i>
           </button>
-          <button class="btn btn-outline-danger" title="Delete" @click.stop="emit('delete-page', page.id!)">
+          <button class="btn btn-danger" title="Delete" @click.stop="emit('delete-page', page.id!)">
             <i class="bi bi-trash"></i>
           </button>
         </span>
@@ -125,7 +142,8 @@ const handlePageModalSave = () => {
     </ul>
 
     <!-- Page Create/Edit Modal -->
-    <dialog class="modal fade" :class="{ show: showPageModal }" :style="showPageModal ? 'display: block; background: rgba(0,0,0,0.5);' : 'display: none;'" tabindex="-1">
+    <dialog class="modal fade" :class="{ show: showPageModal }"
+      :style="showPageModal ? 'display: block; background: rgba(0,0,0,0.5);' : 'display: none;'" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">

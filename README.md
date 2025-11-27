@@ -1,22 +1,27 @@
 # Web Automation Backend
 
-This project provides a powerful and flexible backend for a web automation application. Built with Python, Flask, and Selenium, it allows you to define and manage web applications and their pages via a REST API, and then interact with them programmatically.
+This project provides a powerful and flexible backend for a web automation application. Built with Python, Flask, and Selenium and integrating Node-Red as a workflow tool, it allows you to define and manage web applications and their pages via a REST API, and then interact with them programmatically.
 
-## Features
+By that it implements in "supervised" automation that allows developers and process owners to efficiently collaborate, by developers to have an easy way to examine web pages and define possible interactions with a certain page to hand them over to the process owners which can orchestrate these interactions inside node red. A Headless Browser mode could also be used for "unsupervised" automation, where the whole browser interaction happens server side. However this is not the focus for the first version of the tool. 
+
+## Features / Components
 
 -   **REST API:** A comprehensive API for managing applications, pages, and browser sessions.
+-   **EasyAutomate UI**: A UI that allows to interactively define applications and pages
 -   **Database Integration:** Uses Flask-SQLAlchemy to store application and page definitions.
 -   **Selenium Integration:** Leverages Selenium to control a web browser for automation tasks.
--   **Flexible Browser Management:** Supports both remote (Docker-based) and local browser execution.
--   **Interactive Mode:** Run the application with a visible browser for easy debugging and development.
--   **Containerized:** Comes with a `docker-compose.yml` file for easy setup and deployment.
+-   **Interactive Exploration:** Run the application with a visible browser for easy debugging and development of page definitions
+-   **Node-Red based Workflow UI:** Define Events in the App - Run workflows automatically based on browser or APP interactions-
 
 ## Prerequisites
 
 Before you begin, ensure you have the following installed on your system:
 
 -   [Python 3.10+](https://www.python.org/downloads/)
--   [pip](https://pip.pypa.io/en/stable/installation/) (Python package installer)
+-   [NodeJS 22.12+](https://nodejs.org/en)
+-   [pip](https://pip.pypa.io/en/stable/installation/) (Python package installer, [uv] (https://github.com/astral-sh/uv) recommended)
+
+Optional: 
 -   [Docker](https://docs.docker.com/get-docker/)
 -   [Docker Compose](https://docs.docker.com/compose/install/) (usually included with Docker Desktop)
 
@@ -28,36 +33,45 @@ Before you begin, ensure you have the following installed on your system:
     cd <repository-directory>
     ```
 
-2.  **Install Python dependencies:**
+2. Create a virtual environment and activate it
+
     ```bash
-    pip install -r requirements.txt
+    uv venv 
+    .venv\scripts\activate
     ```
+
+3.  **Install Python dependencies:**
+    ```bash
+    uv pip install -r requirements.txt
+    ```
+
+4. Make sure you have NodeJS installed, then install node-red by executing: 
+    ```bash
+    npm install -g node-red
+    ```
+
+5. Registering the custom nodes with node-red 
+
+Go to the node red folder and register the custom nodes like this: 
+
+```bash
+pushd $HOME\.node-red 
+npm install E:/easy_automate/node_red_node
+```
+
+where E:/easy_automate is the path where you checked out the repository. This will link the source code to the node red installation and make the custom nodes available in node-red. 
 
 ## Running the Application
 
-You can run the application in two ways: using Docker (recommended for a stable, containerized environment) or running it directly on your local machine (ideal for development and debugging).
+The application consists of 3 components: 
 
-### Method 1: Using Docker (Recommended)
+- Flask Server (with embedded Frontend)
+- Node RED
+- Standalone Frontend (only for for development!)
 
-This is the easiest way to get the application and its dependencies running.
+### Initial Configuring the application 
 
-1.  **Build and start the services:**
-    ```bash
-    docker compose up --build -d
-    ```
-    This command will build the Flask application image and start both the `web` and `selenium` services.
-
-2.  **Access the application:**
-    The API will be available at `http://localhost:5000`.
-
-3.  **To stop the services:**
-    ```bash
-    docker compose down
-    ```
-
-### Method 2: Running Locally
-
-This method allows you to run the application directly on your machine and see the browser in action.
+Before running the application we need to create a configuration file. 
 
 1.  **Create a `.env` file:**
     Create a file named `.env` in the root of the project and add the following content:
@@ -78,24 +92,48 @@ This method allows you to run the application directly on your machine and see t
     ```
 
 2.  **Initialize the database:**
-    If you haven't run the application with Docker, you'll need to initialize the database and apply the migrations:
-    ```bash
-    export FLASK_APP=wsgi.py
+    If you haven't run the application, you'll need to initialize the database and apply the migrations:
+    ```powershell
+    # make sure you activate your python environment first with .venv\scripts\activate
     flask db init
     ```
 
-    if you already ran the application you might need to update: 
-    ```bash
-    export FLASK_APP=wsgi.py
+    if you already ran the application you might need to update the DB: 
+
+    ```bash    
+    # make sure you activate your python environment first with .venv\scripts\activate
     flask db migrate
     flask db upgrade
     ```
 
-3.  **Run the Flask application:**
-    ```bash
-    flask run
-    ```
-    The API will be available at `http://localhost:5000`. When you open a new browser session via the API, a Chrome window will open on your desktop.
+### Running the application 
+
+To run the flask backend you can do: 
+
+```bash
+flask run 
+```
+
+The UI will be available at `http://localhost:5000`. 
+
+### Running Node RED 
+
+Open a separate terminal and simply type: 
+
+```bash
+node-red 
+```
+
+It will open on http://localhost:1880 by default 
+
+### Running the UI for development 
+
+To run the UI go to the ./ui folder and run: 
+
+```
+npm install    # necessary only once
+npm run dev 
+```
 
 ## API Overview
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, toRaw, inject, provide, type Ref } from 'vue';
+import { ref, watch, inject, provide, type Ref, toRaw } from 'vue';
 import type { Page, Selector } from '../model';
 import { api } from '../api';
 import SelectorList from './SelectorList.vue';
@@ -18,14 +18,31 @@ const localPage = ref<Page>({ ...props.page });
 
 // Watch for prop changes to switch selected page
 watch(() => props.page, (newVal) => {
-  // JSON parse/stringify is a quick way to deep clone to break reference
+  // Use JSON.parse/stringify for deep clone to avoid structuredClone errors
   localPage.value = JSON.parse(JSON.stringify(newVal));
 });
+
 
 const addSelector = (type: 'identifying' | 'interactive') => {
   const newSel: Selector = { alias: '', xpath: '', visible: null };
   if (type === 'identifying') localPage.value.identifying_selectors.push(newSel);
   else localPage.value.interactive_selectors.push(newSel);
+};
+
+const cloneSelector = (type: 'identifying' | 'interactive', idx: number) => {
+  if (type === 'identifying') {
+    const sel = localPage.value.identifying_selectors[idx];
+    if (sel) {
+      const newSel = JSON.parse(JSON.stringify(sel));
+      localPage.value.identifying_selectors.push(newSel);
+    }
+  } else {
+    const sel = localPage.value.interactive_selectors[idx];
+    if (sel) {
+      const newSel = JSON.parse(JSON.stringify(sel));
+      localPage.value.interactive_selectors.push(newSel);
+    }
+  }
 };
 
 const updateSelector = (type: 'identifying' | 'interactive', selector: Selector, index: number) => {
@@ -109,7 +126,6 @@ const fetchCleanedDom = async () => {
   }
 };
 
-provide('browserSession', browserSession.value);
 provide('pageId', localPage.value.id ?? null);
 </script>
 
@@ -160,18 +176,22 @@ provide('pageId', localPage.value.id ?? null);
         :selectors="localPage.identifying_selectors"
         type="identifying"
         title="Identifying Selectors"
+        :page-id="localPage.id ?? null"
         @add="() => addSelector('identifying')"
         @update="(selector, idx) => updateSelector('identifying', selector, idx)"
         @remove="idx => removeSelector('identifying', idx)"
+        @clone="idx => cloneSelector('identifying', idx)"
       />
 
       <SelectorList
         :selectors="localPage.interactive_selectors"
         type="interactive"
         title="Interactive Selectors"
+        :page-id="localPage.id ?? null"
         @add="() => addSelector('interactive')"
         @update="(selector, idx) => updateSelector('interactive', selector, idx)"
         @remove="idx => removeSelector('interactive', idx)"
+        @clone="idx => cloneSelector('interactive', idx)"
       />
 
       <div>
